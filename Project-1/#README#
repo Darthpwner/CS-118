@@ -1,0 +1,19 @@
+Code for a simple Concurrent, Connection-oriented Client-Server.
+
+Notes (delete later)
+Usage: ./client hostname port (./client 192.168.0.151 10000)
+
+Part A:
+Run "./server 10000" on a terminal
+Run "./client 192.168.0.151 10000" on a terminal
+Run "localhost:10000/" on the browser
+Check the terminal window where I ran "./server 10000". The message is below:
+
+Here is the message: GET / HTTP/1.1
+Host: localhost:10000
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 Firefox/39.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzi
+
+Go back to the browser
