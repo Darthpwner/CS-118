@@ -12,6 +12,21 @@
 #include <sys/wait.h>	/* for the waitpid() system call */
 #include <signal.h>	/* signal name macros, and the kill() prototype */
 
+//Parses the HTTP request from the browser
+/*void parse(HTTPRequest x)*/
+
+//Read the first request of file name, use fstream to get the file name
+   //After getting the file name, I have to check if I have the file or not
+    //If I have a file, I have to make a response messaage
+   //If the server doesn't have the file, it should generate the 404 error message
+   //Once I build the response message, I can use the write function to send it to the client
+   //Should show request file on the screen of the file 
+   //Follow Week 2 discussion
+
+void parse() {
+
+}
+//
 
 void error(char *msg)
 {
