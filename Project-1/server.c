@@ -97,8 +97,9 @@ int main(int argc, char *argv[])
    	 printf("Here is the message: %s\n",buffer);
    	 
    	 //reply to client
-   	 n = write(newsockfd,"I got your message",18);
-   	 if (n < 0) error("ERROR writing to socket");
+     
+   	 // n = write(newsockfd,"I got your message",18);
+   	 // if (n < 0) error("ERROR writing to socket");
          
      //Add Parse here
      parse(n);
