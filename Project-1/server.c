@@ -44,6 +44,7 @@ void parse(const char* browser) {
 
   //Call write to send it to the client
   int n = write(-1, dummy, sizeof(dummy));
+  if (n < 0) error("ERROR writing to socket");
 }
 //
 
@@ -99,6 +100,9 @@ int main(int argc, char *argv[])
    	 n = write(newsockfd,"I got your message",18);
    	 if (n < 0) error("ERROR writing to socket");
          
+     //Add Parse here
+     parse(n);
+     //
      
      close(newsockfd);//close connection 
      close(sockfd);
