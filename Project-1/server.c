@@ -22,9 +22,28 @@
    //Once I build the response message, I can use the write function to send it to the client
    //Should show request file on the screen of the file 
    //Follow Week 2 discussion
+   //Only make changes to server.c code
 
-void parse() {
+//Parse HTTP request message
+   //browser variable should could contain the message request header, so I can get some info
 
+//Get the file name here
+void parse(const char* browser) {
+  //Use fstream to get the terminal output
+  
+  FILE *infile;
+  infile = fopen(browser, "r");
+
+  fscanf(infile, "%d", -1);
+
+  fclose(infile);
+
+  //
+
+  char* dummy;
+
+  //Call write to send it to the client
+  int n = write(-1, dummy, sizeof(dummy));
 }
 //
 
