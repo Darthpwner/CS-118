@@ -12,6 +12,12 @@
 #include <sys/wait.h>	/* for the waitpid() system call */
 #include <signal.h>	/* signal name macros, and the kill() prototype */
 
+void error(char *msg)
+{
+    perror(msg);
+    exit(1);
+}
+
 //Parses the HTTP request from the browser
 /*void parse(HTTPRequest x)*/
 
@@ -39,8 +45,8 @@ void parse(const char* browser) {
 
   //4) Otherwise, generate the 404 error message
   
-  FILE *infile;
-  infile = fopen(browser, "r");
+  FILE *infile = fopen(browser, "r");
+  //infile = fopen(browser, "r");
 
   fscanf(infile, "%d", -1);
 
@@ -57,12 +63,6 @@ void parse(const char* browser) {
 
 }
 //
-
-void error(char *msg)
-{
-    perror(msg);
-    exit(1);
-}
 
 int main(int argc, char *argv[])
 {
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
    	 // if (n < 0) error("ERROR writing to socket");
          
      //Add Parse here
-     parse(n);
+     //parse(n);
      //
      
      close(newsockfd);//close connection 
