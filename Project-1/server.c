@@ -30,6 +30,14 @@
 //Get the file name here
 void parse(const char* browser) {
   //Use fstream to get the terminal output
+
+  //1) Read 1st request of file name, use fstream to get file name
+
+  //2) After getting file name, check if I have the file or not
+
+  //3) If you have the file, make a response message
+
+  //4) Otherwise, generate the 404 error message
   
   FILE *infile;
   infile = fopen(browser, "r");
@@ -45,6 +53,8 @@ void parse(const char* browser) {
   //Call write to send it to the client
   int n = write(-1, dummy, sizeof(dummy));
   if (n < 0) error("ERROR writing to socket");
+
+
 }
 //
 
@@ -97,7 +107,7 @@ int main(int argc, char *argv[])
    	 printf("Here is the message: %s\n",buffer);
    	 
    	 //reply to client
-     
+
    	 // n = write(newsockfd,"I got your message",18);
    	 // if (n < 0) error("ERROR writing to socket");
          
