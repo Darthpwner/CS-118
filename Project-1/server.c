@@ -23,10 +23,10 @@
 
 /*Set flag here***************************************************************************************************************/
 //Uncomment this line to run Part A
-//char Part = 'A';
+char Part = 'A';
 
 //Uncomment this line to run Part B
-char Part = 'B';
+//char Part = 'B';
 /***************************************************************************************************************************/
 
 /*String messages********************************************************************/
@@ -212,6 +212,12 @@ int main(int argc, char *argv[])
             return 0; //We will never get here!
         }
      } else if(Part == 'A') {
+      //accept connections
+      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+         
+      if (newsockfd < 0) 
+        error("ERROR on accept");
+
       int n;
       char buffer[256];
          
