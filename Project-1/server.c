@@ -15,6 +15,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+/*Set flag here***************************************************************************************************************/
+//Uncomment this line to run Part A
+//char Part = 'A';
+
+//Uncomment this line to run Part B
+char Part = 'B';
+/***************************************************************************************************************************/
+
 void error(char *msg)
 {
     perror(msg);
@@ -157,57 +165,54 @@ int main(int argc, char *argv[])
      
      clilen = sizeof(cli_addr);
 
-     /*Kill zombie processes*****************************************/
-     sigAction.sa_handler = sigchild_handler; //Reap all dead processes
-     sigemptyset(&sigAction.sa_mask);
-     sigAction.sa_flags = SA_RESTART;
-     if(sigaction(SIGCHLD, &sigAction, NULL) == -1) {
-      perror("sigaction");
-      exit(1);
-     }
-     /***************************************************************/
-
-     while(1) {
-        //accept connections
-        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-         
-        if (newsockfd < 0) 
-          error("ERROR on accept");
-        pid = fork();  //Create a new process
-        if (pid < 0) {
-            error("ERROR on fork");
-        } else if (pid == 0) { //fork() returns a value of 0 to the child process
-            close(sockfd);
-            parse(newsockfd);
-            exit(0);
-        } else { //Returns the process ID of the child process to the parent
-            close(newsockfd); //Parent doesn't need this
+     if(Part == 'B') {
+        /*Kill zombie processes*****************************************/
+        sigAction.sa_handler = sigchild_handler; //Reap all dead processes
+        sigemptyset(&sigAction.sa_mask);
+        sigAction.sa_flags = SA_RESTART;
+        if(sigaction(SIGCHLD, &sigAction, NULL) == -1) {
+          perror("sigaction");
+          exit(1);
         }
-        return 0; //We will never get here!
-     }
-/*
-     int n;
-   	 char buffer[256];
-   			 
-   	 memset(buffer, 0, 256);	//reset memory
-      
- 		 //read client's message
-   	 n = read(newsockfd,buffer,255);
-   	 if (n < 0) error("ERROR reading from socket");
-   	 printf("Here is the message: %s\n",buffer);
-   	 
-   	 //reply to client
+        /***************************************************************/
 
-   	 // n = write(newsockfd,"I got your message",18);
-   	 // if (n < 0) error("ERROR writing to socket");
+        while(1) {
+            //accept connections
+            newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
          
-     //Add Parse here
-     parse(n);
-     //
+            if (newsockfd < 0) 
+              error("ERROR on accept");
+            pid = fork();  //Create a new process
+            if (pid < 0) {
+              error("ERROR on fork");
+            } else if (pid == 0) { //fork() returns a value of 0 to the child process
+              close(sockfd);
+              parse(newsockfd);
+              exit(0);
+            } else { //Returns the process ID of the child process to the parent
+              close(newsockfd); //Parent doesn't need this
+            }
+            return 0; //We will never get here!
+        }
+     } else if(Part == 'A') {
+      int n;
+      char buffer[256];
+         
+      memset(buffer, 0, 256);  //reset memory
+      
+      //read client's message
+      n = read(newsockfd,buffer,255);
+      if (n < 0) error("ERROR reading from socket");
+      printf("Here is the message: %s\n",buffer);
      
-     close(newsockfd);//close connection 
-     close(sockfd);
+      //reply to client
+      n = write(newsockfd,"I got your message",18);
+      if (n < 0) error("ERROR writing to socket");
+     
+      close(newsockfd);//close connection 
+      close(sockfd);
          
-     return 0; */
+      return 0;
+  }
 }
 
