@@ -15,6 +15,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#define BUFFER_SIZE 512
+#define FILE_SIZE 512
+
+
 /*Set flag here***************************************************************************************************************/
 //Uncomment this line to run Part A
 //char Part = 'A';
@@ -38,8 +42,8 @@ void sigchild_handler(int s) {
 void parse(int browser) {
 
   int n;
-  char buffer[512]; 
-  char file[512];
+  char buffer[BUFFER_SIZE]; 
+  char file[FILE_SIZE];
   
   memset(buffer, 0, sizeof(buffer));  //Fill the buffer in with 0's
   memset(file, 0, sizeof(file));  //Fill the file in with 0's
