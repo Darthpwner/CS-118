@@ -122,8 +122,6 @@ void parse(int browser) {
     error("ERROR writing to socket\n");
   }
   //6) Close the file for good practice
-  free(buffer);
-  free(file);
   free(memory);  
   fclose(infile);
   return;
