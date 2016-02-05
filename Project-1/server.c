@@ -38,7 +38,7 @@ void parse(const char* browser) {
   //Use fstream to get the terminal output
 
   // //1) Read 1st request of file name, use fstream to get file name
-  // FILE *infile = fopen(browser, "r");
+ // FILE *infile = fopen(browser, "r");
 
   // //2) After getting file name, check if I have the file or not
 
@@ -49,19 +49,19 @@ void parse(const char* browser) {
   // //5) Call write function after building the response message
 
   // //6) Close the file for good practice
-  // fclose(infile);
+ // fclose(infile);
   ////////////////////////////////////////////////////////
-  FILE *infile = fopen(browser, "r");
+  // FILE *infile = fopen(browser, "r");
 
-  fscanf(infile, "%d", -1);
+  // fscanf(infile, "%d", -1);
 
-  char* dummy;
+  // char* dummy;
 
-  //Call write to send it to the client
-  int n = write(-1, dummy, sizeof(dummy));
-  if (n < 0) error("ERROR writing to socket");
+  // //Call write to send it to the client
+  // int n = write(-1, dummy, sizeof(dummy));
+  // if (n < 0) error("ERROR writing to socket");
 
-    fclose(infile);
+  //   fclose(infile);
 }
 //
 
