@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
      
      clilen = sizeof(cli_addr);
 
-     //Kill zombie processes
+     /*Kill zombie processes*****************************************/
      sigAction.sa_handler = sigchild_handler; //Reap all dead processes
      sigemptyset(&sigAction.sa_mask);
      sigAction.sa_flags = SA_RESTART;
@@ -165,14 +165,27 @@ int main(int argc, char *argv[])
       perror("sigaction");
       exit(1);
      }
-     //
+     /***************************************************************/
 
-     //accept connections
-     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+     while(1) {
+        //accept connections
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
          
-     if (newsockfd < 0) 
-       error("ERROR on accept");
-         
+        if (newsockfd < 0) 
+          error("ERROR on accept");
+        pid = fork();  //Create a new process
+        if (pid < 0) {
+            error("ERROR on fork");
+        } else if (pid == 0) { //fork() returns a value of 0 to the child process
+            close(sockfd);
+            parse(newsockfd);
+            exit(0);
+        } else { //Returns the process ID of the child process to the parent
+            close(newsockfd); //Parent doesn't need this
+        }
+        return 0; //We will never get here!
+     }
+/*
      int n;
    	 char buffer[256];
    			 
@@ -195,6 +208,6 @@ int main(int argc, char *argv[])
      close(newsockfd);//close connection 
      close(sockfd);
          
-     return 0; 
+     return 0; */
 }
 
