@@ -25,21 +25,7 @@ void sigchild_handler(int s) {
   while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
-//Parses the HTTP request from the browser
-/*void parse(HTTPRequest x)*/
-
-//Read the first request of file name, use fstream to get the file name
-   //After getting the file name, I have to check if I have the file or not
-    //If I have a file, I have to make a response messaage
-   //If the server doesn't have the file, it should generate the 404 error message
-   //Once I build the response message, I can use the write function to send it to the client
-   //Should show request file on the screen of the file 
-   //Follow Week 2 discussion
-   //Only make changes to server.c code
-
-//Parse HTTP request message
-   //browser variable should could contain the message request header, so I can get some info
-
+//Parses the HTTP request from the browser and handles communication once connection has been established
 //Get the file name here
 void parse(int browser) {
 
@@ -51,13 +37,14 @@ void parse(int browser) {
   memset(file, 0, sizeof(file));  //Fill the file in with 0's
 
   //1) Read 1st request of file name, use fstream to get file name
-  //FILE *infile = fopen(browser, "r");
   n = read(browser, buffer, 255);
   if(n < 0) {
     error("ERROR reading from socket");
   }
 
-  printf("Message: %s\n", buffer);
+  buffer[n-1] = '\0';
+  printf("\nThis is the HTTP request message from the client:\n%s\n", buffer);
+  
   //2) After getting file name, check if I have the file or not
   char* start = strstr(buffer, "GET /");
   if(start == buffer) {
@@ -73,19 +60,31 @@ void parse(int browser) {
   int length = end - start;
   strncpy(file, start, length);
   file[length] = '\0';
-  printf("File: %s\n", file);
 
+  //Get the file extension to use for Content-Type
+  char* beginExtension = strstr(file, ".");
+  char extension[4];
+  strcpy(extension, beginExtension + 1);
+  char type[20];
+  if(!strcmp(extension, "jpg")) {
+    strcpy(type, "image/jpeg");
+  } else if(!strcmp(extension, "gif")) {
+    strcpy(type, "image/gif");
+  } else {
+    strcpy(type, "text/html");
+  }
+
+  //Start the server with HTTP response message
   write(browser, "HTTP/1.1", 9);
 
   //4) Otherwise, generate the 404 error message
   struct stat b;
   if(length <= 0 || stat(file, &b) != 0) {
-    printf("404: File Not Found");
+    printf("404: File Not Found\n");
     write(browser, "404 Not Found\n", 14);
-    write(browser, "Content-Language: en-US\n", 24);
+    write(browser, "Connection: Close\n\n", 19);
     write(browser, "Content-Length: 0\n", 18);
     write(browser, "Content-Type: text/html\n", 22);
-    write(browser, "Connection: Close\n\n", 19);
     return;
   }
 
@@ -101,23 +100,26 @@ void parse(int browser) {
 
   //Send the length of the content
   sprintf(buffer, "Content-Length: %d\n", fSize);
-  printf("Size: %d\n", fSize);
+  //printf("Size: %d\n", fSize);
   write(browser, buffer, strlen(buffer));
+
+  //Send the content type
+  sprintf(buffer, "Content-Type: %s\n\n", type);
+  write(browser, buffer, strlen(buffer));
+
+  //Check for errors while reading the file
+  if(ferror(infile)) {
+    error("ERROR Reading File");
+  }
 
   //Load file into memory
   char* memory = (char* ) malloc(sizeof(char) * fSize);
   fread(memory, 1, fSize, infile);
 
-  if(ferror(infile)) {
-    error("ERROR Reading File");
-  }
-
   //5) Call write function after building the response message
-  write(browser, "Connection: Close\n\n", 19);
-  
-  n = write(browser, "Message received", 18);
+  n = write(browser, memory, fSize);
   if (n < 0) { 
-    error("ERROR writing to socket");
+    error("ERROR writing to socket\n");
   }
   //6) Close the file for good practice
   free(buffer);
