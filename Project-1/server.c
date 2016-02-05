@@ -47,6 +47,8 @@ void parse(const char* browser) {
   //4) Otherwise, generate the 404 error message
   
   //5) Call write function after building the response message
+  char* dummy;
+
   int n = write(-1, dummy, sizeof(dummy));
   if (n < 0) error("ERROR writing to socket");
   //6) Close the file for good practice
