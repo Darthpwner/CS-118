@@ -46,6 +46,7 @@ void error(char *msg)
     exit(1);
 }
 
+//Used to handle the zombie problem of terminated processes that cannot be killed
 void sigchild_handler(int s) {
   while(waitpid(-1, NULL, WNOHANG) > 0);
 }
