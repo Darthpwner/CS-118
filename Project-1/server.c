@@ -29,6 +29,13 @@ char Part = 'B';
 
 /*String messages********************************************************************/
 char* HTTP_MESSAGE = "HTTP/1.1 ";
+char* INTERNAL_ERROR_500 = "500 Internal Error\n";
+char* INTERNAL_ERROR_404 = "404 Not Found\n";
+char* CONNECTION_CLOSE = "Connection: Close\n\n";
+char* CONTENT_LENGTH = "Content-Length: 0\n";
+char* CONTENT_TYPE = "Content-Type: text/html\n";
+char* HTTP_200 = "200 OK\n";
+char* CONTENT_LANGUAGE = "Content-Language: en-US\n";
 /************************************************************************************/
 
 void error(char *msg)
@@ -67,7 +74,7 @@ void parse(int browser) {
     start += BUFFER_ADDON;
   } else {
     write(browser, HTTP_MESSAGE, sizeof(HTTP_MESSAGE));
-    write(browser, "500 Internal Error\n", 19);
+    write(browser, INTERNAL_ERROR_500, sizeof(INTERNAL_ERROR_500));
     error("ERROR request type is not supported");
     return;
   }
@@ -96,17 +103,17 @@ void parse(int browser) {
   //4) Otherwise, generate the 404 error message
   struct stat b;
   if(length <= 0 || stat(file, &b) != 0) {
-    printf("404: File Not Found\n");
-    write(browser, "404 Not Found\n", 14);
-    write(browser, "Connection: Close\n\n", 19);
-    write(browser, "Content-Length: 0\n", 18);
-    write(browser, "Content-Type: text/html\n", 22);
+    printf("404 Not Found\n");
+    write(browser, INTERNAL_ERROR_404, sizeof(INTERNAL_ERROR_404));
+    write(browser, CONNECTION_CLOSE, sizeof(CONNECTION_CLOSE));
+    write(browser, CONTENT_LENGTH, sizeof(CONTENT_LENGTH));
+    write(browser, CONTENT_TYPE, sizeof(CONTENT_TYPE));
     return;
   }
 
   //File found
-  write(browser, "200 OK\n", 5);
-  write(browser, "Content-Language: en-US\n", 24);
+  write(browser, HTTP_200,sizeof(HTTP_200));
+  write(browser, CONTENT_LANGUAGE, sizeof(CONTENT_LANGUAGE));
   FILE *infile = fopen(file, "r"); 
 
   //Get size of the file
