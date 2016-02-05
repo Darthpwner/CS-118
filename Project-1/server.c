@@ -23,10 +23,10 @@
 
 /*Set flag here***************************************************************************************************************/
 //Uncomment this line to run Part A
-char Part = 'A';
+//char Part = 'A';
 
 //Uncomment this line to run Part B
-//char Part = 'B';
+char Part = 'B';
 /***************************************************************************************************************************/
 
 /*String messages********************************************************************/
@@ -35,7 +35,7 @@ char* INTERNAL_ERROR_500 = "500 Internal Error\n";
 char* INTERNAL_ERROR_404 = "404 Not Found\n";
 char* CONNECTION_CLOSE = "Connection: Close\n\n";
 char* CONTENT_LENGTH = "Content-Length: 0\n";
-char* CONTENT_TYPE = "Content-Type: text/html\n";
+char* CONTENT_TYPE = "Content-Type: text-plain/html\n";
 char* HTTP_200 = "200 OK\n";
 char* CONTENT_LANGUAGE = "Content-Language: en-US\n";
 /************************************************************************************/
@@ -96,15 +96,15 @@ void parse(int browser) {
   } else if(!strcmp(extension, "gif")) {
     strcpy(type, "image/gif");
   } else {
-    strcpy(type, "text/html");
+    strcpy(type, "text-plain/html");
   }
 
   //Start the server with HTTP response message
   write(browser, HTTP_MESSAGE, sizeof(HTTP_MESSAGE));
 
   //4) Otherwise, generate the 404 error message
-  struct stat b;
-  if(length <= 0 || stat(file, &b) != 0) {
+  struct stat bufferStat;
+  if(length <= 0 || stat(file, &bufferStat) != 0) {
     printf("404 Not Found\n");
     write(browser, INTERNAL_ERROR_404, sizeof(INTERNAL_ERROR_404));
     write(browser, CONNECTION_CLOSE, sizeof(CONNECTION_CLOSE));
