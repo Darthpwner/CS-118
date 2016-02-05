@@ -21,6 +21,10 @@ void error(char *msg)
     exit(1);
 }
 
+void sigchild_handler(int s) {
+  while(waitpid(-1, NULL, WNOHANG) > 0);
+}
+
 //Parses the HTTP request from the browser
 /*void parse(HTTPRequest x)*/
 
@@ -129,7 +133,7 @@ int main(int argc, char *argv[])
      int sockfd, newsockfd, portno, pid;
      socklen_t clilen;
      struct sockaddr_in serv_addr, cli_addr;
-     //struct sigaction sa; //for signal SIGCHILD
+     struct sigaction sigAction; //for signal SIGCHILD
 
      if (argc < 2) {
          fprintf(stderr,"ERROR, no port provided\n");
@@ -151,6 +155,18 @@ int main(int argc, char *argv[])
      
      listen(sockfd,5);	//5 simultaneous connection at most
      
+     clilen = sizeof(cli_addr);
+
+     //Kill zombie processes
+     sigAction.sa_handler = sigchild_handler; //Reap all dead processes
+     sigemptyset(&sigAction.sa_mask);
+     sigAction.sa_flags = SA_RESTART;
+     if(sigaction(SIGCHLD, &sigAction, NULL) == -1) {
+      perror("sigaction");
+      exit(1);
+     }
+     //
+
      //accept connections
      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
          
