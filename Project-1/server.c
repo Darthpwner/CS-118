@@ -17,7 +17,7 @@
 
 #define BUFFER_SIZE 512
 #define FILE_SIZE 512
-
+#define BUFFER_ADDON 5
 
 /*Set flag here***************************************************************************************************************/
 //Uncomment this line to run Part A
@@ -60,7 +60,7 @@ void parse(int browser) {
   //2) After getting file name, check if I have the file or not
   char* start = strstr(buffer, "GET /");
   if(start == buffer) {
-    start += 5;
+    start += BUFFER_ADDON;
   } else {
     write(browser, "HTTP/1.1 ", 9);
     write(browser, "500 Internal Error\n", 17);
