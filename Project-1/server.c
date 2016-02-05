@@ -35,7 +35,7 @@ char* INTERNAL_ERROR_500 = "500 Internal Error\n";
 char* INTERNAL_ERROR_404 = "404 Not Found\n";
 char* CONNECTION_CLOSE = "Connection: Close\n\n";
 char* CONTENT_LENGTH = "Content-Length: 0\n";
-char* CONTENT_TYPE = "Content-Type: text-plain/html\n";
+char* CONTENT_TYPE = "Content-Type: text/html\n";
 char* HTTP_200 = "200 OK\n";
 char* CONTENT_LANGUAGE = "Content-Language: en-US\n";
 /************************************************************************************/
@@ -96,7 +96,7 @@ void parse(int browser) {
   } else if(!strcmp(extension, "gif")) {
     strcpy(type, "image/gif");
   } else {
-    strcpy(type, "text-plain/html");
+    strcpy(type, "text/plain"); //To preserve formatting
   }
 
   //Start the server with HTTP response message
