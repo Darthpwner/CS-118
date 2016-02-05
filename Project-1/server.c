@@ -37,22 +37,23 @@ void error(char *msg)
 void parse(const char* browser) {
   //Use fstream to get the terminal output
 
-  //1) Read 1st request of file name, use fstream to get file name
+  // //1) Read 1st request of file name, use fstream to get file name
+  // FILE *infile = fopen(browser, "r");
 
-  //2) After getting file name, check if I have the file or not
+  // //2) After getting file name, check if I have the file or not
 
-  //3) If you have the file, make a response message
+  // //3) If you have the file, make a response message
 
-  //4) Otherwise, generate the 404 error message
+  // //4) Otherwise, generate the 404 error message
   
+  // //5) Call write function after building the response message
+
+  // //6) Close the file for good practice
+  // fclose(infile);
+  ////////////////////////////////////////////////////////
   FILE *infile = fopen(browser, "r");
-  //infile = fopen(browser, "r");
 
   fscanf(infile, "%d", -1);
-
-  fclose(infile);
-
-  //
 
   char* dummy;
 
@@ -60,7 +61,7 @@ void parse(const char* browser) {
   int n = write(-1, dummy, sizeof(dummy));
   if (n < 0) error("ERROR writing to socket");
 
-
+    fclose(infile);
 }
 //
 
