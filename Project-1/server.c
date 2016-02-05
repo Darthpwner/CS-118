@@ -27,6 +27,10 @@
 char Part = 'B';
 /***************************************************************************************************************************/
 
+/*String messages********************************************************************/
+char* HTTP_MESSAGE = "HTTP/1.1 ";
+/************************************************************************************/
+
 void error(char *msg)
 {
     perror(msg);
@@ -62,8 +66,8 @@ void parse(int browser) {
   if(start == buffer) {
     start += BUFFER_ADDON;
   } else {
-    write(browser, "HTTP/1.1 ", 9);
-    write(browser, "500 Internal Error\n", 17);
+    write(browser, HTTP_MESSAGE, sizeof(HTTP_MESSAGE));
+    write(browser, "500 Internal Error\n", 19);
     error("ERROR request type is not supported");
     return;
   }
@@ -87,7 +91,7 @@ void parse(int browser) {
   }
 
   //Start the server with HTTP response message
-  write(browser, "HTTP/1.1", 9);
+  write(browser, HTTP_MESSAGE, sizeof(HTTP_MESSAGE));
 
   //4) Otherwise, generate the 404 error message
   struct stat b;
