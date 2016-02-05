@@ -45,7 +45,7 @@ void parse(int browser) {
   memset(file, 0, sizeof(file));  //Fill the file in with 0's
 
   //1) Read 1st request of file name, use fstream to get file name
-  n = read(browser, buffer, 255);
+  n = read(browser, buffer, sizeof(buffer));
   if(n < 0) {
     error("ERROR reading from socket");
   }
