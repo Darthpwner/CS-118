@@ -18,6 +18,8 @@
 #define BUFFER_SIZE 512
 #define FILE_SIZE 512
 #define BUFFER_ADDON 5
+#define EXTENSION_SIZE 4
+#define TYPE_SIZE 20
 
 /*Set flag here***************************************************************************************************************/
 //Uncomment this line to run Part A
@@ -86,9 +88,9 @@ void parse(int browser) {
 
   //Get the file extension to use for Content-Type
   char* beginExtension = strstr(file, ".");
-  char extension[4];
+  char extension[EXTENSION_SIZE];
   strcpy(extension, beginExtension + 1);
-  char type[20];
+  char type[TYPE_SIZE];
   if(!strcmp(extension, "jpg")) {
     strcpy(type, "image/jpeg");
   } else if(!strcmp(extension, "gif")) {
