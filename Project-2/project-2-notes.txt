@@ -1,0 +1,6 @@
+receiver == client
+sender == server
+
+* Need sequence # field
+- Needs to be transmitted in multiple packets
+* Need to simulate packet loss & corruption
