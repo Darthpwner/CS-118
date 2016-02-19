@@ -13,7 +13,7 @@
 //Added libraries
 #include <arpa/inet.h>
 //#include "server.c"
-//#include "packet.c"
+#include "packet.c"
 
  #define BUFLEN 512
 
