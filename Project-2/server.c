@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	/* set up the sockets variables */
 	int sockfd = 0;
 	int mode = 0;
-	struct sock_addr, server_addr, cli_addr;
+	struct sockaddr_in server_addr, cli_addr;
 	int pid, clilen, portnumber;
 	struct packet require_pkt, response_pkt;
 	FILE *resrc;
@@ -51,9 +51,9 @@ int main(int argc, char *argv[]) {
 	memset(&server_addr, '0', sizeof(server_addr));
 
 	portnumber = atoi(argv[1]);
-	serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = hton1(INADDR_ANY);
-    serv_addr.sin_port = htons(portno);
+	server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(portnumber);
 
 	/* we want to run an infinite loop so taht server is always running */
 	// while (1) {
