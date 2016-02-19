@@ -18,8 +18,22 @@
  #define BUFLEN 512
 
 typedef struct {
-	int didReceivePacket;	//Acts as a bool
+	int m_didReceivePacket;	//Acts as a bool
+	int m_sendACK;	//Send an ACK back to the server upon receiving the packet
 } ACK;
+
+void sendACK(int received, packet p) {
+	//TODO send the ACK back to the server
+	printf("Type: %i\n", p.type);
+	printf("Sequence_no: %i\n", p.sequence_no);
+	printf("Length: %i\n", p.length);
+
+	printf("Data: ");
+	int i;
+	for(i = 0; i < DATA_SIZE; i++) {
+		printf("%c\n", p.data[i]);	
+	}
+}
 
 void error(char *msg)
 {
@@ -27,12 +41,24 @@ void error(char *msg)
     exit(1);
 }
 
-int main(int argc, char *argv[]) {
+void test() {
 	ACK a;
-	a.didReceivePacket = 1;
+	a.m_didReceivePacket = 1;
 
-	printf("a's value for didReceivePacket: %i\n", a.didReceivePacket);
+	printf("a's value for didReceivePacket: %i\n", a.m_didReceivePacket);
 
+	// if(a.sendACK(m_didReceivePacket)) {
+	// 	printf("SUCCESS\n");
+	// } else {
+	// 	printf("FAIL\n");
+	// }
+}
+
+int main(int argc, char *argv[]) {
+
+	test();	//Testing purposes
+
+	//
 	int sockfd; //Socket descriptor
     int portno, n;
     struct sockaddr_in serv_addr;
