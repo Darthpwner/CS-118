@@ -10,18 +10,30 @@
 #include <stdlib.h>
 #include <strings.h>
 
+//Added libraries
+#include <arpa/inet.h>
+//#include "server.c"
+//#include "packet.c"
+
+ #define BUFLEN 512
+
+// struct ack {
+
+// };
+
 void error(char *msg)
 {
     perror(msg);
-    exit(0);
+    exit(1);
 }
 
-int main(int argc, char *argv[])
-{
-    int sockfd; //Socket descriptor
+int main(int argc, char *argv[]) {
+	int sockfd; //Socket descriptor
     int portno, n;
     struct sockaddr_in serv_addr;
     struct hostent *server; //contains tons of information, including the server's IP address
+
+    socklen_t slen = sizeof(serv_addr);
 
     char buffer[256];
     if (argc < 3) {
@@ -47,23 +59,22 @@ int main(int argc, char *argv[])
     
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) //establish a connection to the server
         error("ERROR connecting");
-    
-    printf("Please enter the message: ");
-    memset(buffer,0, 256);
-    fgets(buffer,255,stdin);	//read message
-    
-    n = write(sockfd,buffer,strlen(buffer)); //write to the socket
-    if (n < 0) 
-         error("ERROR writing to socket");
-    
-    memset(buffer,0,256);
-    n = read(sockfd,buffer,255); //read from the socket
-    if (n < 0) 
-         error("ERROR reading from socket");
-    printf("%s\n",buffer);	//print server's response
-    
-    close(sockfd); //close socket
-    
+
+    //This part changes
+    while(1) {
+    	printf("\nEnter data to send(Type exit and press enter to exit) : ");
+    	scanf("%[^\n]", buffer);
+    	getchar();
+    	if(strcmp(buffer, "exit") == 0) {
+    		exit(0);
+    	}
+    	
+    	if(sendto(sockfd, buffer, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen) == -1) {
+    		err("sendto()");
+    	}
+    }
+
+
+    close(sockfd);
     return 0;
 }
-
