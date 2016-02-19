@@ -28,3 +28,36 @@
 #define TIMEOUT 5000
 
 struct packet WINDOW[WINDOW_SIZE];
+
+int main(int argc, char *argv[]) {
+	/* set up the sockets variables */
+	int sockfd = 0;
+	int mode = 0;
+	struct sock_addr, server_addr, cli_addr;
+	int pid, clilen, portnumber;
+	struct packet require_pkt, response_pkt;
+	FILE *resrc;
+	time_t timer;
+
+	if (argc != 2) {
+		fprintf(stderr, "ERROR on number of arguments");
+		exit(EXIT_FAILURE);
+	}
+
+	/* create socket */
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd < 0)
+		error("ERROR while tryin to open socket");
+	memset(&server_addr, '0', sizeof(server_addr));
+
+	portnumber = atoi(argv[1]);
+	serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = hton1(INADDR_ANY);
+    serv_addr.sin_port = htons(portno);
+
+	/* we want to run an infinite loop so taht server is always running */
+	// while (1) {
+
+	// }
+	return 0;
+}
