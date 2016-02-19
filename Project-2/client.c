@@ -17,9 +17,9 @@
 
  #define BUFLEN 512
 
-// struct ack {
-
-// };
+typedef struct {
+	int didReceivePacket;	//Acts as a bool
+} ACK;
 
 void error(char *msg)
 {
@@ -28,6 +28,11 @@ void error(char *msg)
 }
 
 int main(int argc, char *argv[]) {
+	ACK a;
+	a.didReceivePacket = 1;
+
+	printf("a's value for didReceivePacket: %i\n", a.didReceivePacket);
+
 	int sockfd; //Socket descriptor
     int portno, n;
     struct sockaddr_in serv_addr;
