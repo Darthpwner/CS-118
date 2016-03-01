@@ -47,6 +47,15 @@ void test() {
 
 	printf("a's value for didReceivePacket: %i\n", a.m_didReceivePacket);
 
+	packet p;
+	p.type = 0;
+	p.sequence_no = 1;
+	p.length = 2;
+
+	printf("p's value for type: %i\n", p.type);
+	printf("p's value for sequence_no: %i\n", p.sequence_no);
+	printf("p's value for length: %i\n", p.length);
+
 	// if(a.sendACK(m_didReceivePacket)) {
 	// 	printf("SUCCESS\n");
 	// } else {
