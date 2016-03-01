@@ -63,6 +63,31 @@ void test() {
 	// }
 }
 
+//Figure out the first two parameters
+void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, double pL, double pC) {
+	int fileSize = 0;
+
+    char* allData;
+    char buffer[1024];
+    int totalSegmentCount;
+
+    char* data;
+    int sequence;
+
+    int received[6000]; //Acts a boolean array (0 - false, 1 - true)
+    int nextExpected = 0;
+
+    FILE* fp = fopen("receive", "w");
+    int post = 0;
+
+    int n = sendto(sock, filename, strlen(filename), 0, (struct sockaddr_in*) &serv_addr, sizeof(serv_addr));
+
+    //BUGGY!
+	if(n < 0) {
+		error("ERROR writing to socket");
+	}
+}
+
 int main(int argc, char *argv[]) {
 
 	test();	//Testing purposes
@@ -96,6 +121,8 @@ int main(int argc, char *argv[]) {
     
     //Assign the file name passed in through the command line
     filename = argv[3];
+
+    //Pass in arguments for packet loss and packet corrupted
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET; //initialize server's address
