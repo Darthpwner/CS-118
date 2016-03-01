@@ -73,10 +73,12 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serv_addr;
     struct hostent *server; //contains tons of information, including the server's IP address
 
+    char* filename;
+
     socklen_t slen = sizeof(serv_addr);
 
     char buffer[256];
-    if (argc < 3) {
+    if (argc < 3) {	//Change this to 6 after we incorporate the error handling
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
     }
@@ -92,6 +94,9 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
     
+    //Assign the file name passed in through the command line
+    filename = argv[3];
+
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET; //initialize server's address
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
