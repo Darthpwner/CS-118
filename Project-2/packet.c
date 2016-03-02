@@ -15,6 +15,7 @@ typedef struct {
 	int type;
 	int sequence_no;
 	int length;
+   int data_size;
 	char data[DATA_SIZE];
 	time_t timer;
-} packet ;
+} packet, *packet_t;

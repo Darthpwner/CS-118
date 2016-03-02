@@ -22,19 +22,12 @@ typedef struct ACK {
 	int m_sendACK;	//Send an ACK back to the server upon receiving the packet
 } ACK;
 
-typedef struct {
-    int seq;
-    int len; 
-    int fileSize;
-    char* data;
-} segment, *segment_t;
-
 void sendACK(int received, packet p) {
 	//TODO send the ACK back to the server
 	printf("Type: %i\n", p.type);
 	printf("Sequence_no: %i\n", p.sequence_no);
 	printf("Length: %i\n", p.length);
-
+    printf("File Size: %i\n", p.data_size);
 	printf("Data: ");
 	int i;
 	for(i = 0; i < DATA_SIZE; i++) {
@@ -70,9 +63,45 @@ void test() {
 	// }
 }
 
+packet charToSeg(char* c) {
+    packet_t p_t = malloc(sizeof(packet));
+    char seqstr[5];
+    char lenstr[5];
+    char fsizestr[9];
+    char* ptr = c;
+
+    strncpy(seqstr, ptr, 4);
+    seqstr[4] = '\0';
+    strncpy(lenstr, ptr + 4, 4);
+    lenstr[4] = '\0';
+    strncpy(fsizestr, ptr + 8, 8);
+    fsizestr[8] = '\0';
+
+    int fsize = atoi(fsizestr); //Converts char to int
+    p_t.data = malloc(sizeof(char) * 980);
+    p_t -> data = malloc(sizeof(char) * 980);
+
+    p_t.sequence_no = atoi(seqstr);
+    p_t.length = atoi(lenstr);
+    p_t.data_size = fsize;
+    int i;
+    for(i = 0; i < p_t -> len; i++) {
+        p_t -> data[i] = ptr[i + 20];
+    }
+
+    printf("\nParsing segment complete.\n");
+    printf("Segment sequence #: %d\n", p_t.sequence_no);
+    printf("Segment data length: %d\n", p_t.length);
+    printf("Total file size: %d\n", p.data_size);
+    printf("Data payload: %s\n", p_t.data);
+    return p_t;
+}
+
 //Figure out the first two parameters
 void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, double pL, double pC) {
 	int fileSize = 0;
+
+    packet p;   //Creates a packet
 
     char* allData;
     char buffer[1024];
@@ -85,7 +114,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     int nextExpected = 0;
 
     FILE* fp = fopen("receive", "w");
-    int post = 0;
+    int pos = 0;
 
     int n = sendto(sock, filename, strlen(filename), 0, (struct sockaddr_in*) &serv_addr, sizeof(serv_addr));
 
@@ -94,7 +123,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 		error("ERROR writing to socket");
 	}
 
-    int init, didFinish = 0;    //boolean values
+    int init = 0, didFinish = 0;    //boolean values
 
     //
     while(!didFinish) {
@@ -103,10 +132,87 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         read(sock, buffer, 1000);
         printf("\nReceived a new message! Message: %s\n", buffer);
 
-        data = malloc(984);
+        data = malloc(980);
 
+        //Parse the given message
+        p = charToSeg(buffer);
+        printf("After return data: %s\n", p.data);
 
+        //Copy data to allocated buffer
+        memcpy(data, p.data, p.length);
+
+        //null terminate for the last segment
+        data[p.length] = "\0";
+
+        //First segment received
+        if(!init) {
+            printf("\nInitializing!\n");
+            //Set the total file size on first segment receive
+            printf("Filesize: %d\n", p.data_size)
+            fileSize = p.data_size;
+            allData = malloc(fileSize);   //allocate space for the whole data
+
+            printf("Total final size: %d\n", fileSize);
+
+            //Next, find the total # of segments expected
+            totalSegmentCount = fileSize / 1000;    //Change the 1000 value later to a variable
+            if(fileSize % 1000 > 0) {
+                totalSegmentCount++;    //Add another segment for an incomplete payload
+            }
+
+            printf("Total # of segments (max %d bytes each): %d\n", 1000, totalSegmentCount);
+
+            //Set initailized bool to true
+            init = true;
+        }
+
+        //Record fields of the received segment
+        sequence = p.sequence_no;
+
+        //Update CWnd
+        received[p] = true;
+        if(seq == nextExpected) {
+            printf("-----\n");
+            //Shift if in order segment
+            while(received[nextExpected]) {
+                //Shift if we see a true value
+                nextExpected++;
+
+                printf("Shifting cwnd, next expected segment is %d\n", nextExpected);
+
+                //If we reach the last segment, we have finished
+                if(nextExpected == totalSegmentCount) {
+                    printf("Reached end of the file! Last segment received.\n");
+
+                    didFinish = true;
+                    break;
+                }
+            }
+        } else {
+            printf("-----\nReceived out of order segment. Saving...\n");
+        }
+
+        //Write to File
+        pos = p.sequence_no * 1000;
+
+        printf("Saving data to file: %s\n", data);
+        printf("Writing %d bytes to %d * %d = %d\n", p.length, p->sequence_no, 1000, pos);
+
+        memcpy(allData + pos, data, p.length);
+
+        //Send ACK for the segment
+        char seqstr[4];
+        sprintf(seqstr, "%d", p.sequence_no);
+
+        free(p);
+        free(data);
     }
+
+    fwrite(allData, 1, fileSize, fp);
+    free(allData);
+    fclose(fp);
+
+    sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
 }
 
 int main(int argc, char *argv[]) {
