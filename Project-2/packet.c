@@ -15,4 +15,5 @@ struct packet {
 	int sequence_no;
 	int length;
 	char data[DATA_SIZE];
+	time_t timer;
 };
