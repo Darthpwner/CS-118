@@ -29,7 +29,7 @@
 
 int WINDOW_SIZE = 5;
 
-struct packet *WINDOW = NULL;
+packet *WINDOW = NULL;
 
 void error(char *message) {
 	perror(message);
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	int mode = 0;
 	struct sockaddr_in server_addr, cli_addr;
 	int pid, clilen, portnumber, base, next_sequence_no;
-	struct packet require_pkt, response_pkt;
+	packet require_pkt, response_pkt;
 	struct stat st;
 	FILE *resrc;
 
