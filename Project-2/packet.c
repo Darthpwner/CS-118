@@ -9,10 +9,11 @@
    - data: the actual data  */
 
 #define DATA_SIZE 1024
+#define MAX_SEQUENCE_NUMBER_SIZE 2400000  //30,000 bits * 8
 
 typedef struct {
 	int type;
 	int sequence_no;
 	int length;
 	char data[DATA_SIZE];
-} packet ;
+} packet;

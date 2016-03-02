@@ -17,10 +17,17 @@
 
  #define BUFLEN 512
 
-typedef struct {
+typedef struct ACK {
 	int m_didReceivePacket;	//Acts as a bool
 	int m_sendACK;	//Send an ACK back to the server upon receiving the packet
 } ACK;
+
+typedef struct {
+    int seq;
+    int len; 
+    int fileSize;
+    char* data;
+} segment, *segment_t;
 
 void sendACK(int received, packet p) {
 	//TODO send the ACK back to the server
@@ -86,6 +93,20 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 	if(n < 0) {
 		error("ERROR writing to socket");
 	}
+
+    int init, didFinish = 0;    //boolean values
+
+    //
+    while(!didFinish) {
+        //Receive message from socket
+        memset(buffer, 0, 1000);
+        read(sock, buffer, 1000);
+        printf("\nReceived a new message! Message: %s\n", buffer);
+
+        data = malloc(984);
+
+
+    }
 }
 
 int main(int argc, char *argv[]) {
