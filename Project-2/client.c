@@ -216,7 +216,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
 int main(int argc, char *argv[]) {
 
-	test();	//Testing purposes
+	// test();	//Testing purposes
 
 	//
 	int sockfd; //Socket descriptor
@@ -224,12 +224,14 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serv_addr;
     struct hostent *server; //contains tons of information, including the server's IP address
 
+    double packet_loss, packet_corruption;
+
     char* filename;
 
     socklen_t slen = sizeof(serv_addr);
 
     char buffer[256];
-    if (argc < 3) {	//Change this to 6 after we incorporate the error handling
+    if (argc < 4) {	//Change this to 6 after we incorporate the error handling
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
     }
@@ -254,9 +256,16 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_family = AF_INET; //initialize server's address
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_port = htons(portno);
-    
+
+    receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
+
+    printf("BEFORE ESTABLISH CONNECTION");
+
+    //Cannot establish connection?    
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) //establish a connection to the server
         error("ERROR connecting");
+
+    printf("AFTER ESTABLISH CONNECTION");
 
     //This part changes
     while(1) {
