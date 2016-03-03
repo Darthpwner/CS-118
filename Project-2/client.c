@@ -115,6 +115,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     FILE* fp = fopen("receive", "w");
     int pos = 0;
 
+    //PROBLEM HERE
     int n = sendto(sock, filename, strlen(filename), 0, (struct sockaddr_in*) &serv_addr, sizeof(serv_addr));
 
     //BUGGY!
@@ -228,6 +229,8 @@ int main(int argc, char *argv[]) {
 
     char* filename;
 
+    //char* tail;
+
     socklen_t slen = sizeof(serv_addr);
 
     char buffer[256];
@@ -241,6 +244,8 @@ int main(int argc, char *argv[]) {
     if (sockfd < 0) 
         error("ERROR opening socket");
     
+    printf("sockfd: %i"\n, sockfd);
+
     server = gethostbyname(argv[1]); //takes a string like "www.yahoo.com", and returns a struct hostent which contains information, as IP address, address type, the length of the addresses...
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
@@ -254,7 +259,7 @@ int main(int argc, char *argv[]) {
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET; //initialize server's address
-    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);    //THIS LINE HAS A PROBLEM TOO?
     serv_addr.sin_port = htons(portno);
 
     receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
@@ -262,24 +267,24 @@ int main(int argc, char *argv[]) {
     printf("BEFORE ESTABLISH CONNECTION");
 
     //Cannot establish connection?    
-    if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) //establish a connection to the server
-        error("ERROR connecting");
+    // if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) //establish a connection to the server
+    //     error("ERROR connecting");
 
     printf("AFTER ESTABLISH CONNECTION");
 
     //This part changes
-    while(1) {
-    	printf("\nEnter data to send(Type exit and press enter to exit) : ");
-    	scanf("%[^\n]", buffer);
-    	getchar();
-    	if(strcmp(buffer, "exit") == 0) {
-    		exit(0);
-    	}
+    // while(1) {
+    // 	printf("\nEnter data to send(Type exit and press enter to exit) : ");
+    // 	scanf("%[^\n]", buffer);
+    // 	getchar();
+    // 	if(strcmp(buffer, "exit") == 0) {
+    // 		exit(0);
+    // 	}
     	
-    	if(sendto(sockfd, buffer, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen) == -1) {
-    		err("sendto()");
-    	}
-    }
+    // 	if(sendto(sockfd, buffer, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen) == -1) {
+    // 		err("sendto()");
+    // 	}
+    // }
 
 
     close(sockfd);
