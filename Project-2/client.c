@@ -63,7 +63,7 @@ void test() {
 	// }
 }
 
-packet charToSeg(char* c) {
+packet_t charToSeg(char* c) {
     packet_t p_t = malloc(sizeof(packet));
     char seqstr[5];
     char lenstr[5];
@@ -78,22 +78,21 @@ packet charToSeg(char* c) {
     fsizestr[8] = '\0';
 
     int fsize = atoi(fsizestr); //Converts char to int
-    p_t.data = malloc(sizeof(char) * 980);
     p_t -> data = malloc(sizeof(char) * 980);
 
-    p_t.sequence_no = atoi(seqstr);
-    p_t.length = atoi(lenstr);
-    p_t.data_size = fsize;
+    p_t -> sequence_no = atoi(seqstr);
+    p_t -> length = atoi(lenstr);
+    p_t -> data_size = fsize;
     int i;
-    for(i = 0; i < p_t -> len; i++) {
+    for(i = 0; i < p_t -> length; i++) {
         p_t -> data[i] = ptr[i + 20];
     }
 
     printf("\nParsing segment complete.\n");
-    printf("Segment sequence #: %d\n", p_t.sequence_no);
-    printf("Segment data length: %d\n", p_t.length);
-    printf("Total file size: %d\n", p.data_size);
-    printf("Data payload: %s\n", p_t.data);
+    printf("Segment sequence #: %d\n", p_t -> sequence_no);
+    printf("Segment data length: %d\n", p_t -> length);
+    printf("Total file size: %d\n", p_t -> data_size);
+    printf("Data payload: %s\n", p_t -> data);
     return p_t;
 }
 
@@ -101,7 +100,7 @@ packet charToSeg(char* c) {
 void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, double pL, double pC) {
 	int fileSize = 0;
 
-    packet p;   //Creates a packet
+    packet_t p_t;   //Creates a packet
 
     char* allData;
     char buffer[1024];
@@ -135,21 +134,21 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         data = malloc(980);
 
         //Parse the given message
-        p = charToSeg(buffer);
-        printf("After return data: %s\n", p.data);
+        p_t = charToSeg(buffer);
+        printf("After return data: %s\n", p_t -> data);
 
         //Copy data to allocated buffer
-        memcpy(data, p.data, p.length);
+        memcpy(data, p_t -> data, p_t -> length);
 
         //null terminate for the last segment
-        data[p.length] = "\0";
+        data[p_t -> length] = "\0";
 
         //First segment received
         if(!init) {
             printf("\nInitializing!\n");
             //Set the total file size on first segment receive
-            printf("Filesize: %d\n", p.data_size)
-            fileSize = p.data_size;
+            printf("Filesize: %d\n", p_t -> data_size);
+            fileSize = p_t -> data_size;
             allData = malloc(fileSize);   //allocate space for the whole data
 
             printf("Total final size: %d\n", fileSize);
@@ -163,15 +162,15 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
             printf("Total # of segments (max %d bytes each): %d\n", 1000, totalSegmentCount);
 
             //Set initailized bool to true
-            init = true;
+            init = 1;
         }
 
         //Record fields of the received segment
-        sequence = p.sequence_no;
+        sequence = p_t -> sequence_no;
 
         //Update CWnd
-        received[p] = true;
-        if(seq == nextExpected) {
+        received[sequence] = 1;
+        if(sequence == nextExpected) {
             printf("-----\n");
             //Shift if in order segment
             while(received[nextExpected]) {
@@ -184,7 +183,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
                 if(nextExpected == totalSegmentCount) {
                     printf("Reached end of the file! Last segment received.\n");
 
-                    didFinish = true;
+                    didFinish = 1;
                     break;
                 }
             }
@@ -193,18 +192,18 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         }
 
         //Write to File
-        pos = p.sequence_no * 1000;
+        pos = p_t -> sequence_no * 1000;
 
         printf("Saving data to file: %s\n", data);
-        printf("Writing %d bytes to %d * %d = %d\n", p.length, p->sequence_no, 1000, pos);
+        printf("Writing %d bytes to %d * %d = %d\n", p_t -> length, p_t -> sequence_no, 1000, pos);
 
-        memcpy(allData + pos, data, p.length);
+        memcpy(allData + pos, data, p_t -> length);
 
         //Send ACK for the segment
         char seqstr[4];
-        sprintf(seqstr, "%d", p.sequence_no);
+        sprintf(seqstr, "%d", p_t -> sequence_no);
 
-        free(p);
+        free(p_t);  
         free(data);
     }
 
