@@ -17,12 +17,7 @@ typedef struct {
 	int type;
 	int sequence_no;
 	int length;
-	char data[DATA_SIZE];
-} packet ;
-
-typedef struct {
-	bool* value;
-	int file;
-	int begin;
-	int end;
-}* timer;
+    int data_size;
+	char* data;
+	time_t timer;
+} packet, *packet_t;
