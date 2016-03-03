@@ -8,6 +8,8 @@
    - length: length of the data
    - data: the actual data  */
 
+#include <stdbool.h>
+
 #define DATA_SIZE 1024
 #define MAX_SEQUENCE_NUMBER_SIZE 2400000  //30,000 bits * 8
 
@@ -16,5 +18,11 @@ typedef struct {
 	int sequence_no;
 	int length;
 	char data[DATA_SIZE];
-	time_t timer;
 } packet ;
+
+typedef struct {
+	bool* value;
+	int file;
+	int begin;
+	int end;
+}* timer;
