@@ -21,3 +21,5 @@ typedef struct {
 	char* data;
 	time_t timer;
 } packet, *packet_t;
+
+packet_t charToSeg(char* c);  //Takes in char* and returns a packet_t

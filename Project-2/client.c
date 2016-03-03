@@ -1,7 +1,8 @@
 /*
- A simple client in the internet domain using TCP
+ A simple client in the internet domain using UDP
  Usage: ./client hostname port (./client 192.168.0.151 10000)
  */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,6 +17,7 @@
 #include "packet.c"
 
  #define BUFLEN 512
+ #define MAX_PAYLOAD_CONTENT 984
 
 typedef struct ACK {
 	int m_didReceivePacket;	//Acts as a bool
@@ -64,6 +66,8 @@ void test() {
 }
 
 packet_t charToSeg(char* c) {
+printf("ENTERED charToSeg");
+
     packet_t p_t = malloc(sizeof(packet));
     char seqstr[5];
     char lenstr[5];
@@ -78,14 +82,14 @@ packet_t charToSeg(char* c) {
     fsizestr[8] = '\0';
 
     int fsize = atoi(fsizestr); //Converts char to int
-    p_t -> data = malloc(sizeof(char) * 980);
+    p_t -> data = malloc(sizeof(char) * MAX_PAYLOAD_CONTENT);
 
     p_t -> sequence_no = atoi(seqstr);
     p_t -> length = atoi(lenstr);
     p_t -> data_size = fsize;
     int i;
     for(i = 0; i < p_t -> length; i++) {
-        p_t -> data[i] = ptr[i + 20];
+        p_t -> data[i] = ptr[i + 16];
     }
 
     printf("\nParsing segment complete.\n");
@@ -132,17 +136,17 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         read(sock, buffer, 1000);
         printf("\nReceived a new message! Message: %s\n", buffer);
 
-        data = malloc(980);
+        data = malloc(MAX_PAYLOAD_CONTENT);
 
         //Parse the given message
-        p_t = charToSeg(buffer);
+        p_t = charToSeg(buffer);    //CHECK THIS LINE!
         printf("After return data: %s\n", p_t -> data);
 
         //Copy data to allocated buffer
         memcpy(data, p_t -> data, p_t -> length);
 
         //null terminate for the last segment
-        data[p_t -> length] = "\0";
+        data[p_t -> length] = '\0';
 
         //First segment received
         if(!init) {
@@ -155,12 +159,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
             printf("Total final size: %d\n", fileSize);
 
             //Next, find the total # of segments expected
-            totalSegmentCount = fileSize / 1000;    //Change the 1000 value later to a variable
-            if(fileSize % 1000 > 0) {
+            totalSegmentCount = fileSize / MAX_PAYLOAD_CONTENT;    //Change the 1000 value later to a variable
+            if(fileSize % MAX_PAYLOAD_CONTENT > 0) {
                 totalSegmentCount++;    //Add another segment for an incomplete payload
             }
 
-            printf("Total # of segments (max %d bytes each): %d\n", 1000, totalSegmentCount);
+            printf("Total # of segments (max %d bytes each): %d\n", MAX_PAYLOAD_CONTENT, totalSegmentCount);
 
             //Set initailized bool to true
             init = 1;
@@ -193,10 +197,10 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         }
 
         //Write to File
-        pos = p_t -> sequence_no * 1000;
+        pos = p_t -> sequence_no * MAX_PAYLOAD_CONTENT;
 
         printf("Saving data to file: %s\n", data);
-        printf("Writing %d bytes to %d * %d = %d\n", p_t -> length, p_t -> sequence_no, 1000, pos);
+        printf("Writing %d bytes to %d * %d = %d\n", p_t -> length, p_t -> sequence_no, MAX_PAYLOAD_CONTENT, pos);
 
         memcpy(allData + pos, data, p_t -> length);
 
@@ -244,7 +248,7 @@ int main(int argc, char *argv[]) {
     if (sockfd < 0) 
         error("ERROR opening socket");
     
-    printf("sockfd: %i"\n, sockfd);
+    printf("sockfd: %i\n", sockfd);
 
     server = gethostbyname(argv[1]); //takes a string like "www.yahoo.com", and returns a struct hostent which contains information, as IP address, address type, the length of the addresses...
     if (server == NULL) {
@@ -257,10 +261,15 @@ int main(int argc, char *argv[]) {
 
     //Pass in arguments for packet loss and packet corrupted
 
-    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));  //WHY THE FUCK IS THERE AN ERROR HERE?
     serv_addr.sin_family = AF_INET; //initialize server's address
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);    //THIS LINE HAS A PROBLEM TOO?
     serv_addr.sin_port = htons(portno);
+
+    printf("TEST RECEIVER ACTION\n");
+    printf("sockfd: %i\n", sockfd);
+    printf("serv_addr: %i\n", serv_addr);   //SEG FAULT
+    printf("filename: %s\n", filename);
 
     receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
 
