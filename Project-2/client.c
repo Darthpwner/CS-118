@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
     }
     
     portno = atoi(argv[2]);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0); //create a new socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0); //create a new socket
     if (sockfd < 0) 
         error("ERROR opening socket");
     
@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
 
     printf("TEST RECEIVER ACTION\n");
     printf("sockfd: %i\n", sockfd);
-    printf("serv_addr: %i\n", serv_addr);   //SEG FAULT
+    printf("serv_addr: %i\n", serv_addr);   
     printf("filename: %s\n", filename);
 
     receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
