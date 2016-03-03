@@ -21,8 +21,9 @@ typedef enum {false, true} bool;
 #include <signal.h> 	// used for kill()
 #define TIMEOUT 1
 /* initialize these to false FIRST */
-bool test = false;
+// bool test = false;
 bool resend = false;
+const int timeOut = 1;
 
 /* remember to add p_loss and p_corr later */
 
@@ -151,13 +152,29 @@ void printWindow() {
 	}
 }
 
-/* function to retransmit */
-void retransmit() {
+/* function to retransmit - helper function for timeOutHandler */
+void retransmit(int i, int sock, struct sockaddr* cli_addr, socklen_t clilen) {
+	int k = i;
+	for (k; k < window->start + window->window_length; k++) {
+		window->ACK[k] = 0;
+		window->timer[k] = timeOut;
+	}
+	window->send_next = i;
+	window->start = i;
+	window->window_length = 1;
+	printWindow();
+	/* implement ploss and pcorr later */
+	int n = sendto(sock, window->packets[i], 1000, 0, cli_addr, (socklen_t) clilen);
+	if (n < 0)
+		printf("ERROR: problem sending packet. \n");
+	window->ACK[i] = 1; // indicate sent, but no ACK
 
+	if (window->send_next == window->packet_count-1)
+		window->send_next += 1;
 }
 
 /* function to handle timeOuts */ 
-void timeOut(int signal) {
+void timeOutHandler(int signal) {
 	bool resetWindow = false;
 	int i;
 	for (i = window->start; i < window->start + window->window_length; i++) {
@@ -174,22 +191,87 @@ void timeOut(int signal) {
 }
 
 /* function to prepare sending packets */
-void preSendPacket() {
-
+int* preSendPacket(int* command_length) {
+	/* calculate number of packets to send
+	   allocate space for a new packet */
+	int send_size = window->start + window->window_length - window->send_next;
+	printf("Send packet size: %d \n", send_size);
+	if (send_size <= 0) {
+		printf("Nothing to send; send_size = 0\n");
+		return NULL;
+	}
+	int* command;
+	command = (int *) malloc(send_size * sizeof(int)); // allocate size for the packet
+	int i = 0;
+	int j = 0;
+	while (i < send_size) {
+		if (window->ACK[i+ window->send_next] == 0) {
+			command[j] = window->send_next+i;
+			j += 1;
+			i += 1;
+		}
+		else 
+			i += 1;
+	}
+	*command_length = j;
+	return command;
 }
 
 /* function for sending packets */
 void sendPacket(int* command, int command_length, int sock, struct sockaddr* cli_addr, socklen_t clilen) {
-	
+	/* send the packet specified, and update window on sent packets 
+	   STILL need to implement ploss and pcorr later */
+	int i;
+	for (i=0; i < command_length; i++) {
+		int k = command[i];
+		sendto(sock, window->packets[k], 1000, 0, cli_addr, (socklen_t) clilen);
+		window->ACK[k] = 1; // sent but no ACK
+		if (window->send_next == window->packet_count-1)
+			window->send_next += 1;
+	}
 }
 
 
-/* function to update when ACKed */
+/* function to update when recevied an ACK signal: 0 - not sent; 1 - sent but no ACK; 2 - sent 
+   STILL need to do extra stuff like congestion control and ploss and pcorr */
+void ack_update(int ack_num) {
+	printf("ACK number: %d\n", ack_num);
+	if (window->ACK[ack_num] = 1) { /* sent but no ACK */
+		window->ACK[ack_num] = 2;
+		while(window->ACK[window->start] == 2) {
+			if (window->start + window->window_length < window->packet_count) {
+				window->start += 1;
+				if (window->ACK[window->start+1] != 2)
+					printf("new start index: %d\n", window->start);
+			}
+			else {
+				printf("cannot increase start index because we are at the end of our sequence\n");
+				break;
+			}
+		}
+		while(window->ACK[window->send_next] != 0) {
+			if (window->send_next + 1 < window->packet_count) {
+				window->send_next += 1;
+				printf("New send next: %d\n", window->send_next);
+			}
+			else {
+				printf("no more packets to send.\n");
+				break;
+			}
+		}
+	}
+	else {
+		printf("ACK %d has invalid number.\n", ack_num);
+	}
+}
 
-
-/* function to try finding a file */
+/* function to try finding a file and returning it */
 FILE* findFile (char* c) {
-	return NULL;
+	FILE* f = fopen(c, "r");
+	if (f == NULL)
+		fprintf(stderr, "ERROR: can't find file specified");
+	printf("In findFile() function: \nFile: [%s]\n\n", c);
+	return f;
 }
 
 
@@ -209,8 +291,8 @@ int main(int argc, char *argv[]) {
 	// struct stat st;
 
 	/* set up timeout handler */
-	signal(SIGALRM, TIMEOUT);
-	int newsockfd, window_length, portnumber, pid;
+	signal(SIGALRM, timeOutHandler);
+	int newsockfd, window_length, portnumber, pid, WINDOW_SIZE;
 	FILE *resrc;
 	/* remember to do p_loss and p_corr later */
 
@@ -218,133 +300,108 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "ERROR: format needs: ./server <portnumber> <window_size>\n");
 		exit(1);
 	}
-	if (argc == 3)
-		test = true;
 
-	char* test_input;
-	test_input = argv[1];
-	int WINDOW_SIZE = argv[2];
-	printf("\n \n in main:() \n -------- \n Requested Filenam: %s \n \n", test_input);
-	resrc = findFile(test_input);
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd < 0) 
+		error("ERROR: can't open socket");
+	memset((char *)&server_addr, 0, sizeof(server_addr));
+
+	portnumber = atoi(argv[1]);
+	WINDOW_SIZE = atoi(argv[2]);
+
+	server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(portnumber);
+
+    if (bind(sockfd, (struct sockaddr_in*)&server_addr, sizeof(server_addr)) < 0)
+    	error("ERROR on binding");
+
+    clilen = sizeof(cli_addr);
+
+    /* load the resrc from buffer */
+	while(1) {
+		int tmp;
+		char buffer[256];
+		memset(buffer, 0, 256);
+		tmp = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*) &cli_addr, (socklen_t *) &clilen);
+		if (tmp < 0) 
+			error("ERROR: can't read from socket");
+		else {
+			resrc = findFile(buffer);
+			break;
+		}
+	}
 
 	/* make our window struct */
 	makeWindow(resrc, WINDOW_SIZE);
 	printWindow();
 
-	// int command_length; 
-	// /* Steps to send packet: 
-	//    1. Prepare to send - check that it is ready */
-	// int* last_command = preSendPacket(&command_length);
-	// printf("Preparing to send packet: \n");
-	// int j = 0;
-	// for (j = 0; j < command_length; j++) {
-	// 	if (j == command_length - 1)
-	// 		printf("%d \n", last_command[j]);
-	// 	else
-	// 		printf("%d, ", last_command[j]);
-	// }
-	// sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
-	// free(last_command);
-	// command_length = 0;
-	// printWindow();
+	int command_length; 
+	/* Steps to send packet: 
+	   1. Prepare to send - check that it is ready */
+	int* last_command = preSendPacket(&command_length);
+	printf("Preparing to send packet: \n");
+	int j = 0;
+	for (j = 0; j < command_length; j++) {
+		printf("sending j = %d, %d\n", j, last_command[j]);
+	}
+	sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
+	free(last_command); // SEGABRT ISSUE when j = 76
+	command_length = 0;
+	printWindow();
 
-	// alarm(1); 
+	alarm(1); 
 
-	//  we have sent the packets, but now we need to implement selective repeat 
-	// /* infinite loop to check for timing */
-	// while(1) {
-	// 	if (resend == true) {
-	// 		printf("RESEND NEEDED: preparing the resend\n");
-	// 		last_command = preSendPacket(&command_length);
-	// 		if (command_length > 0) {
-	// 			printf("RESEND NEEDED: preparing the resend\n");
-	// 			printf("%d \n", last_command[0]);
-	// 			sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
-	// 		}
-	// 		free(last_command);
-	// 		resend = false; /* no need to resend anymore */	
-	// 	}
-	// 	/* we have sent everything, receive ACKs now from client */
-		
-	// }
+	/* we have sent the packets, but now we need to implement selective repeat */
+	/* infinite loop to check for timing */
+	while(1) {
+		if (resend == true) {
+			printf("RESEND NEEDED: preparing the resend\n");
+			last_command = preSendPacket(&command_length);
+			if (command_length > 0) {
+				printf("RESEND NEEDED: preparing the resend\n");
+				printf("%d \n", last_command[0]);
+				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
+			}
+			free(last_command);
+			resend = false; /* no need to resend anymore */	
+		}
+		/* we have sent everything, receive ACKs now from client */
+		int tmp;
+		char ack_buffer[256];
+		memset(ack_buffer, 0, 256);
+		tmp = recvfrom(sockfd, ack_buffer, sizeof(ack_buffer), 0, (struct sockaddr*) &cli_addr, (socklen_t *) &clilen);
+		if (tmp < 0)
+			error("ERROR can't read from socket");
+		else {
+			int ack = 0;
+			if (strncmp("done", ack_buffer, 4) == 0) {
+				printf("ACK recieved; process is done\n");
+				exit(0);
+			}
+			ack = atoi(ack_buffer);
+			ack_update(ack);
 
+			printWindow();
+			if (isComplete()) {
+				printf("SUCCESS: sent packets \n");
+				break;
+			}
+			int* last_command = preSendPacket(&command_length);
+			if (command_length > 0) {
+				printf("last time: Preparing to send packet: \n");
+				int j = 0;
+				for (j = 0; j < command_length; j++) {
+						printf("%d\n", last_command[j]);
+				}
+				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
+			}
+			else 
+				printf("command_length is 0; nothing to send \n");
+			printWindow();
+			free(last_command);
+			command_length = 0;
+		}
+	}
 	return 0;
-
-	// /* create socket */
-	// sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	// if (sockfd < 0)
-	// 	error("ERROR while tryin to open socket");
-	// memset(&server_addr, '0', sizeof(server_addr));
-
-	// portnumber = atoi(argv[1]);
-	// WINDOW_SIZE = atoi(argv[2]);
-	// // WINDOW = (struct packet *)malloc(sizeof(WINDOW_SIZE)); /* not sure if right */
-	// WINDOW = malloc(WINDOW_SIZE*sizeof *WINDOW);
-	// server_addr.sin_family = AF_INET;
- //    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
- //    server_addr.sin_port = htons(portnumber);
-
- //    if (bind(sockfd, (struct sockaddr_in*)&server_addr, sizeof(server_addr)) < 0)
- //    	error("ERROR on binding");
-
- //    clilen = sizeof(cli_addr);
-
-	// /* we want to run an infinite loop so that server is always running */
-	// while (1) {
-
-	// 	/* divide up the packet */ 
-	// 	if (recvfrom(sockfd, &require_pkt, sizeof(require_pkt), 0, (struct sockaddr_in*) &cli_addr, (socklen_t*) &clilen) < 0)
-	// 		error("ERROR: can't receive anything from client");
-	// 	printf("SUCCESS: Server received %d bytes from %s: %s\n", require_pkt.length, inet_ntoa(cli_addr.sin_addr), require_pkt.data);
-
-	// 	base = 1;
-	// 	next_sequence_no = 1;
-	// 	/* clear window*/
-	// 	bzero((char *) WINDOW, sizeof(WINDOW));
-
-	// 	/* check if we can open our data */
-	// 	resrc = fopen(require_pkt.data, 'rb');
-	// 	if (resrc == NULL)
-	// 		error("ERROR: can't open resource");
-
-	// 	int itr, packets_total;
-
-	// 	 split the data into packets 
-	// 	stat(require_pkt.data, &st);
-	// 	packets_total = st.st_size / DATA_SIZE;
-	// 	if (st.st_size % DATA_SIZE != 0)
-	// 		packets_total++;
-	// 	printf("SPLITTING PACKETS: we have total packets = %d\n", packets_total);
-
-	// 	bzero((char *) &response_pkt, sizeof(response_pkt));
-	// 	response_pkt.type = 2;
-
-	// 	/* Attempt to send packets */
-	// 	for (itr = 0; itr < WINDOW_SIZE; itr++) {
-	// 		response_pkt.sequence_no = itr + 1;
-	// 		response_pkt.length = fread(response_pkt.data, 1, DATA_SIZE, resrc);
-	// 		WINDOW[itr] = response_pkt;
-	// 		if (sendto(sockfd, &response_pkt, sizeof(int)*3+response_pkt.length, 0, (struct sockaddr_in*) &cli_addr, clilen) < 0)
-	// 			error("ERROR: could not sent packet");
-	// 		printf("SUCCESS: send packet number %d\n", response_pkt.sequence_no);
-	// 		next_sequence_no++;
-	// 		time(&response_pkt.timer);
-	// 	}
-
-	// 	// /* Selective Repeat Implementation */
-	// 	// while (base <= packets_total) {
-	// 	// 	/* keep checking until ACK is sent back */
-
-	// 	// }
-
-	// 	bzero((char *) &response_pkt, sizeof(response_pkt));
-	// 	response_pkt.type = 3;
-	// 	puts("Teardown");
-	// 	if (sendto(sockfd, &response_pkt, sizeof(response_pkt.type) * 3, 0, (struct sockaddr_in *) &cli_addr, clilen) < 0)
-	// 		error("ERROR: could not send packet");
-	// 	/* we are done. close the resource */
-	// 	free(WINDOW); /* since we allocated memory*/
-	// 	fclose(resrc);
-	// }
-	// return 0;
 }
