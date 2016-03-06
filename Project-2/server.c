@@ -113,9 +113,11 @@ void makeWindow(FILE* file, int WINDOW_SIZE) {
 	}
 	window->resend_command = malloc(sizeof(int));
 	window->resend_command[0] = -1;	
+
 	window->send_next = 0;
 	window->packet_count = packet_count;
 	window->packets = packets;
+	window->start = 0;
 	window->window_length = WINDOW_SIZE; /* check on this */
 	printf("makeWindow(): \n--------------\nfile_src: %s\nbegin: %d\npacket_count: %d\nwindow size: %d\n\n\n", src, window->start, window->packet_count, window->window_length);
 	free(src);
@@ -162,7 +164,7 @@ void retransmit(int i, int sock, struct sockaddr* cli_addr, socklen_t clilen) {
 	window->send_next = i;
 	window->start = i;
 	window->window_length = 1;
-	printWindow();
+	// printWindow();
 	/* implement ploss and pcorr later */
 	int n = sendto(sock, window->packets[i], 1000, 0, cli_addr, (socklen_t) clilen);
 	if (n < 0)
@@ -334,24 +336,21 @@ int main(int argc, char *argv[]) {
 
 	/* make our window struct */
 	makeWindow(resrc, WINDOW_SIZE);
-	printWindow();
+	// printWindow();
 
 	int command_length; 
 	/* Steps to send packet: 
 	   1. Prepare to send - check that it is ready */
 	int* last_command = preSendPacket(&command_length);
-	printf("Preparing to send packet: \n");
+	printf("Preparing to send packet; command length: %d\n", command_length);
 	int j = 0;
-	for (j = 0; j < command_length; j++) {
-		printf("sending j = %d, %d\n", j, last_command[j]);
-		if ( j == 75) {
-			printf("j is at 75");
-		}
-	}
+	// for (j = 0; j < command_length; j++) {
+	// 	printf("sending j = %d, %d\n", j, last_command[j]);
+	// }
 	sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 	// free(last_command); // SEGABRT ISSUE when j = 76
 	command_length = 0;
-	printWindow();
+	// printWindow();
 
 	alarm(1); 
 
@@ -363,7 +362,7 @@ int main(int argc, char *argv[]) {
 			last_command = preSendPacket(&command_length);
 			if (command_length > 0) {
 				printf("RESEND NEEDED: preparing the resend\n");
-				printf("%d \n", last_command[0]);
+				// printf("%d \n", last_command[0]);
 				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 			}
 			// free(last_command);
@@ -385,24 +384,24 @@ int main(int argc, char *argv[]) {
 			ack = atoi(ack_buffer);
 			ack_update(ack);
 
-			printWindow();
+			// printWindow();
 			if (isComplete()) {
 				printf("SUCCESS: sent packets \n");
 				break;
 			}
-			int* last_command = preSendPacket(&command_length);
+			last_command = preSendPacket(&command_length);
 			if (command_length > 0) {
-				printf("last time: Preparing to send packet: \n");
+				printf("LAST TIME Preparing to send packet: \n");
 				int j = 0;
 				for (j = 0; j < command_length; j++) {
-						printf("%d\n", last_command[j]);
+						// printf("%d\n", last_command[j]);
 				}
 				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 			}
 			else 
 				printf("command_length is 0; nothing to send \n");
-			printWindow();
-			// free(last_command);
+			// printWindow();
+			free(last_command);
 			command_length = 0;
 		}
 	}

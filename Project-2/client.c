@@ -208,12 +208,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
 
-        // free(p_t);  
-        // free(data);
+        free(p_t);  
+        free(data);
     }
 
     fwrite(allData, 1, fileSize, fp);
-    // free(allData);
+    free(allData);
     fclose(fp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
