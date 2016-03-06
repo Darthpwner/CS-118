@@ -13,38 +13,38 @@
 
 //Added libraries
 #include <arpa/inet.h>
-//#include "server.c"
 #include "packet.c"
 
- #define BUFLEN 512
- #define MAX_PAYLOAD_CONTENT 984
+#define MAX_PAYLOAD_CONTENT 984
 
-void error(char *msg)
-{
+void error(char *msg) {
     perror(msg);
     exit(1);
 }
 
 packet_t charToSeg(char* c) {
     packet_t p_t = malloc(sizeof(packet));
-    char seqstr[5];
-    char lenstr[5];
-    char fsizestr[9];
+    
+    //Header size will be 16 bytes (4 sequence #, 4 length, 8 data size; in that order)
+    char sequence_no_str[5];
+    char length_str[5];
+    char data_size_str[9];
     char* ptr = c;
 
-    strncpy(seqstr, ptr, 4);
-    seqstr[4] = '\0';
-    strncpy(lenstr, ptr + 4, 4);
-    lenstr[4] = '\0';
-    strncpy(fsizestr, ptr + 8, 8);
-    fsizestr[8] = '\0';
+    strncpy(sequence_no_str, ptr, 4);
+    sequence_no_str[4] = '\0';
+    strncpy(length_str, ptr + 4, 4);
+    length_str[4] = '\0';
+    strncpy(data_size_str, ptr + 8, 8);
+    data_size_str[8] = '\0';
 
-    int fsize = atoi(fsizestr); //Converts char to int
+    int data_size = atoi(data_size_str); //Converts char to int
     p_t -> data = malloc(sizeof(char) * MAX_PAYLOAD_CONTENT);
 
-    p_t -> sequence_no = atoi(seqstr);
-    p_t -> length = atoi(lenstr);
-    p_t -> data_size = fsize;
+    p_t -> sequence_no = atoi(sequence_no_str);
+    p_t -> length = atoi(length_str);
+    p_t -> data_size = data_size;
+    
     int i;
     for(i = 0; i < p_t -> length; i++) {
         p_t -> data[i] = ptr[i + 16];
@@ -175,10 +175,11 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
     free(p_t);
     free(data);
-    // free(allData);
-    // fclose(fp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
+
+    //free(allData);
+    //fclose(fp);
 }
 
 int main(int argc, char *argv[]) {
