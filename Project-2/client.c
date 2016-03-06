@@ -19,50 +19,10 @@
  #define BUFLEN 512
  #define MAX_PAYLOAD_CONTENT 984
 
-typedef struct ACK {
-	int m_didReceivePacket;	//Acts as a bool
-	int m_sendACK;	//Send an ACK back to the server upon receiving the packet
-} ACK;
-
-void sendACK(int received, packet p) {
-	//TODO send the ACK back to the server
-	printf("Type: %i\n", p.type);
-	printf("Sequence_no: %i\n", p.sequence_no);
-	printf("Length: %i\n", p.length);
-    printf("File Size: %i\n", p.data_size);
-	printf("Data: ");
-	int i;
-	for(i = 0; i < DATA_SIZE; i++) {
-		printf("%c\n", p.data[i]);	
-	}
-}
-
 void error(char *msg)
 {
     perror(msg);
     exit(1);
-}
-
-void test() {
-	ACK a;
-	a.m_didReceivePacket = 1;
-
-	printf("a's value for didReceivePacket: %i\n", a.m_didReceivePacket);
-
-	packet p;
-	p.type = 0;
-	p.sequence_no = 1;
-	p.length = 2;
-
-	printf("p's value for type: %i\n", p.type);
-	printf("p's value for sequence_no: %i\n", p.sequence_no);
-	printf("p's value for length: %i\n", p.length);
-
-	// if(a.sendACK(m_didReceivePacket)) {
-	// 	printf("SUCCESS\n");
-	// } else {
-	// 	printf("FAIL\n");
-	// }
 }
 
 packet_t charToSeg(char* c) {
@@ -211,11 +171,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
-
     fwrite(allData, 1, fileSize, fp);
 
-    free(allData);
-    fclose(fp);
+    free(p_t);
+    free(data);
+    // free(allData);
+    // fclose(fp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
 }
