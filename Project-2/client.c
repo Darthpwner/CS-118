@@ -208,11 +208,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
 
-        free(p_t);  //This is line is fucked up
-        free(data);   //This is line is fucked up
+        // free(p_t);  //This is line is fucked up
+        // free(data);   //This is line is fucked up
     }
 
     fwrite(allData, 1, fileSize, fp);
+
     free(allData);
     fclose(fp);
 
