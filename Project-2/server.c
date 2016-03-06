@@ -24,6 +24,8 @@ typedef enum {false, true} bool;
 // bool test = false;
 bool resend = false;
 static int const TIMEOUT = 1;
+double p_loss = 0;
+double p_corr = 0;
 
 /* remember to add p_loss and p_corr later */
 
@@ -166,12 +168,27 @@ void retransmit(int i, int sock, const struct sockaddr* cli_addr, socklen_t clil
 	window->window_length = 1;
 	// printWindow();
 	/* implement ploss and pcorr later */
-	printf("Retransmitting packet : %d\n", i);
-	int n = sendto(sock, window->packets[i], 1000, 0, cli_addr, (socklen_t) clilen);
-	if (n < 0)
-		printf("ERROR: problem sending packet. \n");
-	window->ACK[i] = 1; // indicate sent, but no ACK
-
+	double r = (rand() % 100) * 1.0 / 100.0;
+	if ( r < (1.0 - p_loss - p_corr)) {
+		printf("Random generated r: %f\n", r);
+		printf("Retransmitting packet : %d\n", i);
+		int n = sendto(sock, window->packets[i], 1000, 0, cli_addr, (socklen_t) clilen);
+		if (n < 0)
+			printf("ERROR: problem sending packet. \n");
+		window->ACK[i] = 1; // indicate sent, but no ACK
+	}
+	else if (r > (1 - p_corr)) {
+		char corrupt_packet[4];
+		sprintf(corrupt_packet, "%d", -1);
+		int tmp = sendto(sock, corrupt_packet, strlen(corrupt_packet), 0, cli_addr, (socklen_t) clilen);
+		if (tmp < 0)
+			error("ERROR: can't write to socket");
+		printf("There are packet corruption: sending corrupted packet...\n");
+	}
+	else {
+		printf("Random generated r: %f\n", r);
+		printf("Packet %d sent but experienced loss\n", i);
+	}
 	if (window->send_next == window->packet_count-1)
 		window->send_next += 1;
 }
@@ -226,8 +243,23 @@ void sendPacket(int* command, int command_length, int sock, struct sockaddr* cli
 	   STILL need to implement ploss and pcorr later */
 	int i;
 	for (i=0; i < command_length; i++) {
+		double r = (rand() % 100) * 1.0 / 100.0;
 		int k = command[i];
-		sendto(sock, window->packets[k], 1000, 0, cli_addr, (socklen_t) clilen);
+		if (r <(1.0 - p_loss - p_corr)) {
+			printf("Random Generated r: %f\n", r);
+			sendto(sock, window->packets[k], 1000, 0, cli_addr, (socklen_t) clilen);
+		}
+		else if (r > (1 - p_corr)) {
+			char corrupt_packet[4];
+			sprintf(corrupt_packet, "%d", -1);
+			int n = sendto(sock, corrupt_packet, strlen(corrupt_packet), 0, cli_addr, (socklen_t) clilen);
+			if ( n < 0 )
+				error("ERROR: can't write to socket");
+			printf("There are packet corruption: sending corrupted packet...\n");
+		}
+		else {
+			printf("Packet %d sent but loss\n", command[i]);
+		}
 		window->ACK[k] = 1; // sent but no ACK
 		if (window->send_next == window->packet_count-1)
 			window->send_next += 1;
@@ -298,9 +330,10 @@ int main(int argc, char *argv[]) {
 	int newsockfd, window_length, portnumber, pid, WINDOW_SIZE;
 	FILE *resrc;
 	/* remember to do p_loss and p_corr later */
+	char* tail;
 
-	if (argc < 3) { /* remember to add in p_loss and p_corr */
-		fprintf(stderr, "ERROR: format needs: ./server <portnumber> <window_size>\n");
+	if (argc < 5) { /* remember to add in p_loss and p_corr */
+		fprintf(stderr, "ERROR: format needs: ./server <portnumber> <window_size> <p_loss> <p_corrupt>\n");
 		exit(1);
 	}
 
@@ -312,6 +345,12 @@ int main(int argc, char *argv[]) {
 	portnumber = atoi(argv[1]);
 	WINDOW_SIZE = atoi(argv[2]);
 
+	p_loss = strtof(argv[3], &tail);
+	p_corr = strtof(argv[4], &tail);
+
+	printf("Input Loss Probability: %f\n", p_loss);
+	printf("Input Corruption Porbability: %f\n", p_corr);
+	
 	server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(portnumber);
