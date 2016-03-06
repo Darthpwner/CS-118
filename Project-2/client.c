@@ -72,7 +72,7 @@ packet_t charToSeg(char* c) {
 
 //Figure out the first two parameters
 void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, double pL, double pC) {
-	int fileSize = 0;
+	int data_size = 0;
 
     packet_t p_t;   //Creates a packet
 
@@ -80,7 +80,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     char buffer[1024];
     int totalSegmentCount;
 
-    char* data;
+    char* temp;
     int sequence;
 
     int received[6000]; //Acts a boolean array (0 - false, 1 - true)
@@ -107,31 +107,31 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         read(sock, buffer, 1000);
         printf("\nReceived a new message! Message: %s\n", buffer);
 
-        data = malloc(MAX_PAYLOAD_CONTENT);
+        temp = malloc(MAX_PAYLOAD_CONTENT);
 
         //Parse the given message
         p_t = charToSeg(buffer);    //CHECK THIS LINE!
-        printf("After return data: %s\n", p_t -> data);
+        printf("After return temp: %s\n", p_t -> data);
 
         //Copy data to allocated buffer
-        memcpy(data, p_t -> data, p_t -> length);
+        memcpy(temp, p_t -> data, p_t -> length);
 
         //null terminate for the last segment
-        data[p_t -> length] = '\0';
+        temp[p_t -> length] = '\0';
 
         //First segment received
         if(!init) {
             printf("\nInitializing!\n");
             //Set the total file size on first segment receive
-            printf("Filesize: %d\n", p_t -> data_size);
-            fileSize = p_t -> data_size;
-            allData = malloc(fileSize);   //allocate space for the whole data
+            printf("data_size: %d\n", p_t -> data_size);
+            data_size = p_t -> data_size;
+            allData = malloc(data_size);   //allocate space for the whole data
 
-            printf("Total final size: %d\n", fileSize);
+            printf("Total final size: %d\n", data_size);
 
             //Next, find the total # of segments expected
-            totalSegmentCount = fileSize / MAX_PAYLOAD_CONTENT;    //Change the 1000 value later to a variable
-            if(fileSize % MAX_PAYLOAD_CONTENT > 0) {
+            totalSegmentCount = data_size / MAX_PAYLOAD_CONTENT;    //Change the 1000 value later to a variable
+            if(data_size % MAX_PAYLOAD_CONTENT > 0) {
                 totalSegmentCount++;    //Add another segment for an incomplete payload
             }
 
@@ -170,10 +170,10 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         //Write to File
         pos = p_t -> sequence_no * MAX_PAYLOAD_CONTENT;
 
-        printf("Saving data to file: %s\n", data);
+        printf("Saving temp to file: %s\n", temp);
         printf("Writing %d bytes to %d * %d = %d\n", p_t -> length, p_t -> sequence_no, MAX_PAYLOAD_CONTENT, pos);
 
-        memcpy(allData + pos, data, p_t -> length);
+        memcpy(allData + pos, temp, p_t -> length);
 
         //Send ACK for the segment
         char seqstr[4];
@@ -182,10 +182,10 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
-    fwrite(allData, 1, fileSize, fp);
+    fwrite(allData, 1, data_size, fp);
 
     free(p_t);
-    free(data);
+    free(temp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
 
