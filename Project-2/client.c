@@ -66,8 +66,6 @@ void test() {
 }
 
 packet_t charToSeg(char* c) {
-printf("ENTERED charToSeg");
-
     packet_t p_t = malloc(sizeof(packet));
     char seqstr[5];
     char lenstr[5];
@@ -90,6 +88,7 @@ printf("ENTERED charToSeg");
     int i;
     for(i = 0; i < p_t -> length; i++) {
         p_t -> data[i] = ptr[i + 16];
+        printf("p_t -> data[%d] = %c\n", i, p_t -> data[i]);
     }
 
     printf("\nParsing segment complete.\n");
@@ -128,6 +127,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 	}
 
     int init = 0, didFinish = 0;    //boolean values
+
 
     //
     while(!didFinish) {
@@ -208,12 +208,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
 
-        // free(p_t);  
-        // free(data);
+        free(p_t);  //This is line is fucked up
+        free(data);   //This is line is fucked up
     }
 
     fwrite(allData, 1, fileSize, fp);
-    // free(allData);
+    free(allData);
     fclose(fp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
@@ -272,29 +272,6 @@ int main(int argc, char *argv[]) {
     printf("filename: %s\n", filename);
 
     receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
-
-    printf("BEFORE ESTABLISH CONNECTION");
-
-    //Cannot establish connection?    
-    // if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) //establish a connection to the server
-    //     error("ERROR connecting");
-
-    printf("AFTER ESTABLISH CONNECTION");
-
-    //This part changes
-    // while(1) {
-    // 	printf("\nEnter data to send(Type exit and press enter to exit) : ");
-    // 	scanf("%[^\n]", buffer);
-    // 	getchar();
-    // 	if(strcmp(buffer, "exit") == 0) {
-    // 		exit(0);
-    // 	}
-    	
-    // 	if(sendto(sockfd, buffer, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen) == -1) {
-    // 		err("sendto()");
-    // 	}
-    // }
-
 
     close(sockfd);
     return 0;
