@@ -23,6 +23,9 @@
 #define DATA_SIZE_STR_SIZE 9
 #define HEADER_SIZE 16
 
+//receiverAction constants
+#define ONE_KB 1000
+
 void error(char *msg) {
     perror(msg);
     exit(1);
@@ -77,14 +80,14 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     packet_t p_t;   //Creates a packet
 
     char* data;
-    char buffer[1024];
-    int totalSegmentCount;
+    char buffer[ONE_KB];
+    int total_packet_count;
 
     char* temp;
-    int sequence;
+    int sequence_no;
 
     int received[6000]; //Acts a boolean array (0 - false, 1 - true)
-    int nextExpected = 0;
+    int next_expected_packet = 0;
 
     FILE* fp = fopen("receive", "w");
     int pos = 0;
@@ -103,8 +106,8 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     //
     while(!didFinish) {
         //Receive message from socket
-        memset(buffer, 0, 1000);
-        read(sock, buffer, 1000);
+        memset(buffer, 0, ONE_KB);
+        read(sock, buffer, ONE_KB);
         printf("\nReceived a new message! Message: %s\n", buffer);
 
         temp = malloc(MAX_PAYLOAD_CONTENT);
@@ -130,33 +133,33 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
             printf("Total final size: %d\n", data_size);
 
             //Next, find the total # of segments expected
-            totalSegmentCount = data_size / MAX_PAYLOAD_CONTENT;    //Change the 1000 value later to a variable
+            total_packet_count = data_size / MAX_PAYLOAD_CONTENT;    //Change the 1000 value later to a variable
             if(data_size % MAX_PAYLOAD_CONTENT > 0) {
-                totalSegmentCount++;    //Add another segment for an incomplete payload
+                total_packet_count++;    //Add another segment for an incomplete payload
             }
 
-            printf("Total # of segments (max %d bytes each): %d\n", MAX_PAYLOAD_CONTENT, totalSegmentCount);
+            printf("Total # of segments (max %d bytes each): %d\n", MAX_PAYLOAD_CONTENT, total_packet_count);
 
             //Set initailized bool to true
             init = 1;
         }
 
         //Record fields of the received segment
-        sequence = p_t -> sequence_no;
+        sequence_no = p_t -> sequence_no;
 
         //Update CWnd
-        received[sequence] = 1;
-        if(sequence == nextExpected) {
+        received[sequence_no] = 1;
+        if(sequence_no == next_expected_packet) {
             printf("-----\n");
             //Shift if in order segment
-            while(received[nextExpected]) {
+            while(received[next_expected_packet]) {
                 //Shift if we see a true value
-                nextExpected++;
+                next_expected_packet++;
 
-                printf("Shifting cwnd, next expected segment is %d\n", nextExpected);
+                printf("Shifting cwnd, next expected packet is %d\n", next_expected_packet);
 
                 //If we reach the last segment, we have finished
-                if(nextExpected == totalSegmentCount) {
+                if(next_expected_packet == total_packet_count) {
                     printf("Reached end of the file! Last segment received.\n");
 
                     didFinish = 1;
@@ -182,6 +185,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
+
     fwrite(data, 1, data_size, fp);
 
     free(p_t);
