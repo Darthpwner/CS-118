@@ -61,7 +61,7 @@ void makeWindow(FILE* file, int WINDOW_SIZE) {
 	      	* 4 bytes to store length
 	*/
 	size_t packet_cap;
-	packet_cap = 10;
+	packet_cap = 984;
 	char* src = NULL; // string to hold the data
 	fseek(file, 0L, SEEK_END); 
 	int file_size = ftell(file); // extract size of the file
@@ -344,9 +344,12 @@ int main(int argc, char *argv[]) {
 	int j = 0;
 	for (j = 0; j < command_length; j++) {
 		printf("sending j = %d, %d\n", j, last_command[j]);
+		if ( j == 75) {
+			printf("j is at 75");
+		}
 	}
 	sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
-	free(last_command); // SEGABRT ISSUE when j = 76
+	// free(last_command); // SEGABRT ISSUE when j = 76
 	command_length = 0;
 	printWindow();
 
@@ -363,7 +366,7 @@ int main(int argc, char *argv[]) {
 				printf("%d \n", last_command[0]);
 				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 			}
-			free(last_command);
+			// free(last_command);
 			resend = false; /* no need to resend anymore */	
 		}
 		/* we have sent everything, receive ACKs now from client */
@@ -399,7 +402,7 @@ int main(int argc, char *argv[]) {
 			else 
 				printf("command_length is 0; nothing to send \n");
 			printWindow();
-			free(last_command);
+			// free(last_command);
 			command_length = 0;
 		}
 	}
