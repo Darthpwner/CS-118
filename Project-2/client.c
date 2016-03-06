@@ -76,7 +76,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
     packet_t p_t;   //Creates a packet
 
-    char* allData;
+    char* data;
     char buffer[1024];
     int totalSegmentCount;
 
@@ -125,7 +125,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
             //Set the total file size on first segment receive
             printf("data_size: %d\n", p_t -> data_size);
             data_size = p_t -> data_size;
-            allData = malloc(data_size);   //allocate space for the whole data
+            data = malloc(data_size);   //allocate space for the whole data
 
             printf("Total final size: %d\n", data_size);
 
@@ -173,7 +173,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         printf("Saving temp to file: %s\n", temp);
         printf("Writing %d bytes to %d * %d = %d\n", p_t -> length, p_t -> sequence_no, MAX_PAYLOAD_CONTENT, pos);
 
-        memcpy(allData + pos, temp, p_t -> length);
+        memcpy(data + pos, temp, p_t -> length);
 
         //Send ACK for the segment
         char seqstr[4];
@@ -182,14 +182,14 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
-    fwrite(allData, 1, data_size, fp);
+    fwrite(data, 1, data_size, fp);
 
     free(p_t);
     free(temp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
 
-    //free(allData);
+    //free(data);
     //fclose(fp);
 }
 
