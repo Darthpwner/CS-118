@@ -26,6 +26,9 @@
 //receiverAction constants
 #define ONE_KB 1000
 
+//corrupted packet constants
+ #define CORRUPTED_PACKET_SIZE 4
+
 void error(char *msg) {
     perror(msg);
     exit(1);
@@ -102,7 +105,6 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
     int init = 0, didFinish = 0;    //boolean values
 
-
     //
     while(!didFinish) {
         //Receive message from socket
@@ -111,6 +113,12 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         printf("\nReceived a new message! Message: %s\n", buffer);
 
         temp = malloc(MAX_PAYLOAD_CONTENT);
+
+        //Check if message is corrupted
+        if(strlen(buffer) < 16) {
+            printf("-------\nReceived corrupted packet! Discarding...\n-------\n");
+            continue;
+        }
 
         //Parse the given message
         p_t = charToSeg(buffer);    //CHECK THIS LINE!
@@ -181,11 +189,28 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         //Send ACK for the segment
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
-        int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr)); //write to the socket
-        if (n < 0)
-            error("ERROR writing to socket");
-        // free(p_t);  //This is line is fucked up
-        // free(data);   //This is line is fucked up
+
+        //Decide if to corrupt or lose segment
+        double r = (rand() % 100) * 1.0/100.0;    
+        printf("\n\n%f\n\n", r);
+
+        if(r < (1.0 - pL - pC)) {
+            int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr)); //write to the socket
+            if (n < 0) {
+                error("ERROR writing to socket");
+            }
+        } else if (r > (1 - pC)) {
+            char corruptedPacket[CORRUPTED_PACKET_SIZE];
+            sprintf(corruptedPacket, "%d", -1);
+            int n = sendto(sock, corruptedPacket, strlen(corruptedPacket), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));    //write to the socket
+            if(n < 0) {
+                error("ERROR writing to socket");
+            }
+
+            printf("-----------\nPacket corrupted! Sending corrupted packet...\n-----------\n");
+        } else {
+            printf("-----------\nPacket lost...\n-----------\n");
+        }
     }
 
     fwrite(data, 1, data_size, fp);
@@ -213,13 +238,13 @@ int main(int argc, char *argv[]) {
 
     char* filename;
 
-    //char* tail;
+    char* tail; //CHANGE THIS LATER
 
     socklen_t slen = sizeof(serv_addr);
 
     char buffer[256];
-    if (argc < 4) {	//Change this to 6 after we incorporate the error handling
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
+    if (argc < 6) {	//Change this to 6 after we incorporate the error handling
+       fprintf(stderr,"usage %s hostname port filename packet_loss packet_corruption\n", argv[0]);
        exit(0);
     }
     
@@ -227,9 +252,7 @@ int main(int argc, char *argv[]) {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0); //create a new socket
     if (sockfd < 0) 
         error("ERROR opening socket");
-    
-    printf("sockfd: %i\n", sockfd);
-
+  
     server = gethostbyname(argv[1]); //takes a string like "www.yahoo.com", and returns a struct hostent which contains information, as IP address, address type, the length of the addresses...
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
@@ -240,16 +263,13 @@ int main(int argc, char *argv[]) {
     filename = argv[3];
 
     //Pass in arguments for packet loss and packet corrupted
+    packet_loss = strtod(argv[4], &tail);
+    packet_corruption = strtod(argv[5], &tail);
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));  //WHY THE FUCK IS THERE AN ERROR HERE?
     serv_addr.sin_family = AF_INET; //initialize server's address
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);    //THIS LINE HAS A PROBLEM TOO?
     serv_addr.sin_port = htons(portno);
-
-    printf("TEST RECEIVER ACTION\n");
-    printf("sockfd: %i\n", sockfd);
-    printf("serv_addr: %i\n", serv_addr);   
-    printf("filename: %s\n", filename);
 
     receiverAction(sockfd, serv_addr, filename, packet_loss, packet_corruption);
 
