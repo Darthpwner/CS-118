@@ -19,11 +19,11 @@ typedef enum {false, true} bool;
 #include <sys/wait.h>	// for waitpid() needed to keep server running
 #include <sys/stat.h>	// get the stats
 #include <signal.h> 	// used for kill()
-#define TIMEOUT 1
+
 /* initialize these to false FIRST */
 // bool test = false;
 bool resend = false;
-const int timeOut = 1;
+static int const TIMEOUT = 1;
 
 /* remember to add p_loss and p_corr later */
 
@@ -155,17 +155,18 @@ void printWindow() {
 }
 
 /* function to retransmit - helper function for timeOutHandler */
-void retransmit(int i, int sock, struct sockaddr* cli_addr, socklen_t clilen) {
-	int k = i;
-	for (k; k < window->start + window->window_length; k++) {
+void retransmit(int i, int sock, const struct sockaddr* cli_addr, socklen_t clilen) {
+	int k;
+	for (k=i; k < window->start + window->window_length; k++) {
 		window->ACK[k] = 0;
-		window->timer[k] = timeOut;
+		window->timer[k] = TIMEOUT;
 	}
 	window->send_next = i;
 	window->start = i;
 	window->window_length = 1;
 	// printWindow();
 	/* implement ploss and pcorr later */
+	printf("Retransmitting packet : %d\n", i);
 	int n = sendto(sock, window->packets[i], 1000, 0, cli_addr, (socklen_t) clilen);
 	if (n < 0)
 		printf("ERROR: problem sending packet. \n");
@@ -348,7 +349,7 @@ int main(int argc, char *argv[]) {
 	// 	printf("sending j = %d, %d\n", j, last_command[j]);
 	// }
 	sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
-	// free(last_command); // SEGABRT ISSUE when j = 76
+	free(last_command); 
 	command_length = 0;
 	// printWindow();
 
@@ -365,7 +366,7 @@ int main(int argc, char *argv[]) {
 				// printf("%d \n", last_command[0]);
 				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 			}
-			// free(last_command);
+			free(last_command);
 			resend = false; /* no need to resend anymore */	
 		}
 		/* we have sent everything, receive ACKs now from client */

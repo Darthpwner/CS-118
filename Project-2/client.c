@@ -32,9 +32,9 @@ void sendACK(int received, packet p) {
     printf("File Size: %i\n", p.data_size);
 	printf("Data: ");
 	int i;
-	for(i = 0; i < DATA_SIZE; i++) {
-		printf("%c\n", p.data[i]);	
-	}
+	// for(i = 0; i < DATA_SIZE; i++) {
+	// 	printf("%c\n", p.data[i]);	
+	// }
 }
 
 void error(char *msg)
@@ -88,7 +88,7 @@ packet_t charToSeg(char* c) {
     int i;
     for(i = 0; i < p_t -> length; i++) {
         p_t -> data[i] = ptr[i + 16];
-        printf("p_t -> data[%d] = %c\n", i, p_t -> data[i]);
+        // printf("p_t -> data[%d] = %c\n", i, p_t -> data[i]);
     }
 
     printf("\nParsing segment complete.\n");
@@ -207,7 +207,9 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         //Send ACK for the segment
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
-
+        int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr)); //write to the socket
+        if (n < 0)
+            error("ERROR writing to socket");
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
