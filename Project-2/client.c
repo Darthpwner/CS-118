@@ -17,6 +17,12 @@
 
 #define MAX_PAYLOAD_CONTENT 984
 
+//charToSeg constants
+#define SEQUENCE_NO_STR_SIZE 5
+#define LENGTH_STR_SIZE 5
+#define DATA_SIZE_STR_SIZE 9
+#define HEADER_SIZE 16
+
 void error(char *msg) {
     perror(msg);
     exit(1);
@@ -26,17 +32,22 @@ packet_t charToSeg(char* c) {
     packet_t p_t = malloc(sizeof(packet));
     
     //Header size will be 16 bytes (4 sequence #, 4 length, 8 data size; in that order)
-    char sequence_no_str[5];
-    char length_str[5];
-    char data_size_str[9];
+    char sequence_no_str[SEQUENCE_NO_STR_SIZE];
+    char length_str[LENGTH_STR_SIZE];
+    char data_size_str[DATA_SIZE_STR_SIZE];
     char* ptr = c;
 
-    strncpy(sequence_no_str, ptr, 4);
-    sequence_no_str[4] = '\0';
-    strncpy(length_str, ptr + 4, 4);
-    length_str[4] = '\0';
-    strncpy(data_size_str, ptr + 8, 8);
-    data_size_str[8] = '\0';
+    //Sequence # starts off the header
+    strncpy(sequence_no_str, ptr, SEQUENCE_NO_STR_SIZE - 1);
+    sequence_no_str[SEQUENCE_NO_STR_SIZE - 1] = '\0';
+
+    //Offset the length bytes by 4
+    strncpy(length_str, ptr + (SEQUENCE_NO_STR_SIZE - 1), LENGTH_STR_SIZE - 1);
+    length_str[LENGTH_STR_SIZE - 1] = '\0';
+
+    //Offset the data size bytes by 8
+    strncpy(data_size_str, ptr + DATA_SIZE_STR_SIZE - 1, DATA_SIZE_STR_SIZE - 1);
+    data_size_str[DATA_SIZE_STR_SIZE - 1] = '\0';
 
     int data_size = atoi(data_size_str); //Converts char to int
     p_t -> data = malloc(sizeof(char) * MAX_PAYLOAD_CONTENT);
@@ -44,10 +55,10 @@ packet_t charToSeg(char* c) {
     p_t -> sequence_no = atoi(sequence_no_str);
     p_t -> length = atoi(length_str);
     p_t -> data_size = data_size;
-    
+
     int i;
     for(i = 0; i < p_t -> length; i++) {
-        p_t -> data[i] = ptr[i + 16];
+        p_t -> data[i] = ptr[i + HEADER_SIZE];
         printf("p_t -> data[%d] = %c\n", i, p_t -> data[i]);
     }
 
