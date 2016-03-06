@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
 	// 	printf("sending j = %d, %d\n", j, last_command[j]);
 	// }
 	sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
-	free(last_command); 
+	// free(last_command); 
 	command_length = 0;
 	// printWindow();
 
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
 				// printf("%d \n", last_command[0]);
 				sendPacket(last_command, command_length, sockfd, (struct sockaddr*) &cli_addr, clilen);
 			}
-			free(last_command);
+			// free(last_command);
 			resend = false; /* no need to resend anymore */	
 		}
 		/* we have sent everything, receive ACKs now from client */
