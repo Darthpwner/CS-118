@@ -182,6 +182,10 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
 
+        int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
+        if(n < 0) {
+            error("ERROR writing to socket");
+        }
         // free(p_t);  //This is line is fucked up
         // free(data);   //This is line is fucked up
     }
