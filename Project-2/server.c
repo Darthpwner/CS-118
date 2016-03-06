@@ -19,11 +19,12 @@ typedef enum {false, true} bool;
 #include <sys/wait.h>	// for waitpid() needed to keep server running
 #include <sys/stat.h>	// get the stats
 #include <signal.h> 	// used for kill()
+#include <time.h>
 
-/* initialize these to false FIRST */
-// bool test = false;
-bool resend = false;
 static int const TIMEOUT = 1;
+static int const threshold = 5;
+
+bool resend = false;
 double p_loss = 0;
 double p_corr = 0;
 
@@ -120,7 +121,7 @@ void makeWindow(FILE* file, int WINDOW_SIZE) {
 	window->packet_count = packet_count;
 	window->packets = packets;
 	window->start = 0;
-	window->window_length = WINDOW_SIZE; /* check on this */
+	window->window_length = 1; /* check on this , should be WINDOW_SIZE*/
 	printf("makeWindow(): \n--------------\nfile_src: %s\nbegin: %d\npacket_count: %d\nwindow size: %d\n\n\n", src, window->start, window->packet_count, window->window_length);
 	free(src);
 }
@@ -156,6 +157,67 @@ void printWindow() {
 	}
 }
 
+/* function to update when recevied an ACK signal: 0 - not sent; 1 - sent but no ACK; 2 - sent 
+   STILL need to do extra stuff like congestion control and ploss and pcorr */
+void ack_update(int ack_num) {
+	if (ack_num < 0) {
+		printf("Corrupt ACK received! Discarding...\n");
+		return;
+	}
+	printf("ACK number: %d\n", ack_num);
+	if (window->ACK[ack_num] == 1) { /* sent but no ACK */
+		window->ACK[ack_num] = 2;
+		/* slowstart extra credit */
+		if (isComplete() == false && threshold >= window->window_length) {
+			printf("Slow Start Algorithm: Current Window Size: %d\n", window->window_length);
+			if (window->start + window->window_length < window->packet_count) {
+				window->window_length += 1;
+				printf("New Window Size: %d\n", window->window_length);
+			}
+			else {
+				printf("Window size cannot be increased, probably due to end of packet\n");
+			}
+		}
+		else {
+			if (window->end_command == ack_num) {
+				/* congestion avoidance extra credit */
+				printf("Congestion Avoidance Algorithm: Current Window Size: %d\n", window->window_length);
+				if (window->start + window->window_length < window->packet_count) {
+					window->window_length += 1;
+					printf("New Window Size: %d\n", window->window_length);
+				}
+			}
+			else
+				printf("Window size cannot be increased, probably due to end of packet\n");
+		}
+
+		while(window->ACK[window->start] == 2) {
+			if (window->start + window->window_length < window->packet_count) {
+				window->start += 1;
+				if (window->ACK[window->start+1] != 2)
+					printf("new start index: %d\n", window->start);
+			}
+			else {
+				printf("cannot increase start index because we are at the end of our sequence\n");
+				break;
+			}
+		}
+		while(window->ACK[window->send_next] != 0) {
+			if (window->send_next + 1 < window->packet_count) {
+				window->send_next += 1;
+				printf("New send next: %d\n", window->send_next);
+			}
+			else {
+				printf("no more packets to send.\n");
+				break;
+			}
+		}
+	}
+	else {
+		printf("ACK %d has invalid number.\n", ack_num);
+	}
+}
+
 /* function to retransmit - helper function for timeOutHandler */
 void retransmit(int i, int sock, const struct sockaddr* cli_addr, socklen_t clilen) {
 	int k;
@@ -177,7 +239,7 @@ void retransmit(int i, int sock, const struct sockaddr* cli_addr, socklen_t clil
 			printf("ERROR: problem sending packet. \n");
 		window->ACK[i] = 1; // indicate sent, but no ACK
 	}
-	else if (r > (1 - p_corr)) {
+	else if (r > (1.0 - p_corr)) {
 		char corrupt_packet[4];
 		sprintf(corrupt_packet, "%d", -1);
 		int tmp = sendto(sock, corrupt_packet, strlen(corrupt_packet), 0, cli_addr, (socklen_t) clilen);
@@ -263,40 +325,6 @@ void sendPacket(int* command, int command_length, int sock, struct sockaddr* cli
 		window->ACK[k] = 1; // sent but no ACK
 		if (window->send_next == window->packet_count-1)
 			window->send_next += 1;
-	}
-}
-
-
-/* function to update when recevied an ACK signal: 0 - not sent; 1 - sent but no ACK; 2 - sent 
-   STILL need to do extra stuff like congestion control and ploss and pcorr */
-void ack_update(int ack_num) {
-	printf("ACK number: %d\n", ack_num);
-	if (window->ACK[ack_num] = 1) { /* sent but no ACK */
-		window->ACK[ack_num] = 2;
-		while(window->ACK[window->start] == 2) {
-			if (window->start + window->window_length < window->packet_count) {
-				window->start += 1;
-				if (window->ACK[window->start+1] != 2)
-					printf("new start index: %d\n", window->start);
-			}
-			else {
-				printf("cannot increase start index because we are at the end of our sequence\n");
-				break;
-			}
-		}
-		while(window->ACK[window->send_next] != 0) {
-			if (window->send_next + 1 < window->packet_count) {
-				window->send_next += 1;
-				printf("New send next: %d\n", window->send_next);
-			}
-			else {
-				printf("no more packets to send.\n");
-				break;
-			}
-		}
-	}
-	else {
-		printf("ACK %d has invalid number.\n", ack_num);
 	}
 }
 

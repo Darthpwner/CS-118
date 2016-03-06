@@ -27,7 +27,8 @@
 #define ONE_KB 1000
 
 //corrupted packet constants
- #define CORRUPTED_PACKET_SIZE 4
+ // #define CORRUPTED_PACKET_SIZE 4
+static const int CORRUPTED_PACKET_SIZE = 4;
 
 void error(char *msg) {
     perror(msg);
@@ -215,8 +216,8 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
     fwrite(data, 1, data_size, fp);
 
-    free(p_t);
-    free(temp);
+    // free(p_t);
+    // free(temp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
 
