@@ -21,8 +21,8 @@ typedef enum {false, true} bool;
 #include <signal.h> 	// used for kill()
 #include <time.h>
 
-static int const TIMEOUT = 1;
-static int const threshold = 5;
+static int const TIMEOUT = 5;
+static int const ssthresh = 10;
 
 bool resend = false;
 double p_loss = 0;
@@ -121,7 +121,7 @@ void makeWindow(FILE* file, int WINDOW_SIZE) {
 	window->packet_count = packet_count;
 	window->packets = packets;
 	window->start = 0;
-	window->window_length = 1; /* check on this , should be WINDOW_SIZE*/
+	window->window_length = WINDOW_SIZE; /* check on this , should be WINDOW_SIZE*/
 	// printf("makeWindow(): \n--------------\nfile_src: %s\nbegin: %d\npacket_count: %d\nwindow size: %d\n\n\n", src, window->start, window->packet_count, window->window_length);
 	free(src);
 }
@@ -168,7 +168,7 @@ void ack_update(int ack_num) {
 	if (window->ACK[ack_num] == 1) { /* sent but no ACK */
 		window->ACK[ack_num] = 2;
 		/* slowstart extra credit */
-		if (isComplete() == false && threshold >= window->window_length) {
+		if (isComplete() == false && ssthresh >= window->window_length) {
 			printf("Slow Start Algorithm: Current Window Size: %d\n", window->window_length);
 			if (window->start + window->window_length < window->packet_count) {
 				window->window_length += 1;

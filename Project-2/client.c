@@ -115,10 +115,20 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
     //
     while(!didFinish) {
-        //Receive message from socket
-        memset(buffer, 0, ONE_KB);
-        read(sock, buffer, ONE_KB);
-        printf("\nReceived a new message! Message: \n%s\n", buffer);
+
+        //Decide if to corrupt or lose segment
+        double r = (rand() % 100) * 1.0/100.0;    
+        printf("\n\nRandomly Generated r: %f\n\n", r);
+        if(r >= (1.0 - pL - pC) || r > (1 - pC)) {
+            printf("\nLOSS: nothing is sent back to server\n");
+            continue;
+        }
+        else {
+            //Receive message from socket
+            memset(buffer, 0, ONE_KB);
+            read(sock, buffer, ONE_KB);
+            printf("\nReceived a new message! Message: \n%s\n", buffer);
+        }
 
         temp = malloc(MAX_PAYLOAD_CONTENT);
 
@@ -197,10 +207,6 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         //Send ACK for the segment
         char seqstr[4];
         sprintf(seqstr, "%d", p_t -> sequence_no);
-
-        //Decide if to corrupt or lose segment
-        double r = (rand() % 100) * 1.0/100.0;    
-        printf("\n\nRandomly Generated r: %f\n\n", r);
 
         if(r < (1.0 - pL - pC)) {
             int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr)); //write to the socket
