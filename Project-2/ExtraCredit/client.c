@@ -40,7 +40,7 @@ int main(void)
 
     /* Create file where data will be stored */
     FILE *fp;
-    fp = fopen("receive", "sb"); 
+    fp = fopen("receive", "ab"); 
     if(NULL == fp)
     {
         printf("Error opening file");
