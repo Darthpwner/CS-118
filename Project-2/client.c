@@ -118,7 +118,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
         //Receive message from socket
         memset(buffer, 0, ONE_KB);
         read(sock, buffer, ONE_KB);
-        printf("\nReceived a new message! Message: %s\n", buffer);
+        printf("\nReceived a new message! Message: \n%s\n", buffer);
 
         temp = malloc(MAX_PAYLOAD_CONTENT);
 
@@ -200,7 +200,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
 
         //Decide if to corrupt or lose segment
         double r = (rand() % 100) * 1.0/100.0;    
-        printf("\n\n%f\n\n", r);
+        printf("\n\nRandomly Generated r: %f\n\n", r);
 
         if(r < (1.0 - pL - pC)) {
             int n = sendto(sock, seqstr, strlen(seqstr), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr)); //write to the socket
@@ -227,7 +227,7 @@ void receiverAction(int sock, struct sockaddr_in serv_addr, char* filename, doub
     // free(temp);
 
     sendto(sock, "done", strlen("done"), 0, (struct sockaddr_in *) &serv_addr, sizeof(serv_addr));  //Write to the socket
-
+    printf("\n-----------------------\nClient received all data, sending 'done' message to server\n-----------------------\n");
     //free(data);
     //fclose(fp);
 }
