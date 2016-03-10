@@ -11,13 +11,18 @@
 #include <errno.h>
 #include <arpa/inet.h>
 
-int main(void)
+int main(int argc, char *argv[])
 {
     int sockfd = 0;
     int bytesReceived = 0;
     char recvBuff[256];
     memset(recvBuff, '0', sizeof(recvBuff));
     struct sockaddr_in serv_addr;
+
+    if (argc < 3) { //Change this to 6 after we incorporate the error handling
+       fprintf(stderr,"usage %s hostname port\n", argv[0]);
+       exit(0);
+    }
 
     /* Create a socket first */
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0))< 0)
@@ -28,8 +33,9 @@ int main(void)
 
     /* Initialize sockaddr_in data structure */
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5000); // port
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    serv_addr.sin_addr.s_addr = argv[1];    //IP address
+    serv_addr.sin_port = argv[2];   //port
 
     /* Attempt a connection */
     if(connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))<0)

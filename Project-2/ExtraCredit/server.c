@@ -8,13 +8,20 @@
 #include <string.h>
 #include <sys/types.h>
 
-int main(void)
+int main(int argc, char *argv[])
 {
     int listenfd = 0;
     int connfd = 0;
     struct sockaddr_in serv_addr;
     char sendBuff[1025];
     int numrv;
+
+    char* filename;
+
+    if (argc < 3) { /* remember to add in p_loss and p_corr */
+        fprintf(stderr,"usage %s portnumber filename\n", argv[0]);
+        exit(1);
+    }
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -25,7 +32,9 @@ int main(void)
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(5000);
+    serv_addr.sin_port = argv[1];
+
+    filename = argv[2];
 
     bind(listenfd, (struct sockaddr*)&serv_addr,sizeof(serv_addr));
 
@@ -41,10 +50,10 @@ int main(void)
         connfd = accept(listenfd, (struct sockaddr*)NULL ,NULL);
 
         /* Open the file that we wish to transfer */
-        FILE *fp = fopen("small.txt","rb");
+        FILE *fp = fopen(filename,"rb");
         if(fp==NULL)
         {
-            printf("File opern error");
+            printf("File open error");
             return 1;   
         }   
 
