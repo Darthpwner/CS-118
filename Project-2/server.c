@@ -122,7 +122,7 @@ void makeWindow(FILE* file, int WINDOW_SIZE) {
 	window->packets = packets;
 	window->start = 0;
 	window->window_length = 1; /* check on this , should be WINDOW_SIZE*/
-	printf("makeWindow(): \n--------------\nfile_src: %s\nbegin: %d\npacket_count: %d\nwindow size: %d\n\n\n", src, window->start, window->packet_count, window->window_length);
+	// printf("makeWindow(): \n--------------\nfile_src: %s\nbegin: %d\npacket_count: %d\nwindow size: %d\n\n\n", src, window->start, window->packet_count, window->window_length);
 	free(src);
 }
 
@@ -164,7 +164,7 @@ void ack_update(int ack_num) {
 		printf("Corrupt ACK received! Discarding...\n");
 		return;
 	}
-	printf("ACK number: %d\n", ack_num);
+	printf("\nReceived ACK number: %d\n\n", ack_num);
 	if (window->ACK[ack_num] == 1) { /* sent but no ACK */
 		window->ACK[ack_num] = 2;
 		/* slowstart extra credit */
@@ -310,6 +310,7 @@ void sendPacket(int* command, int command_length, int sock, struct sockaddr* cli
 		if (r <(1.0 - p_loss - p_corr)) {
 			printf("Random Generated r: %f\n", r);
 			sendto(sock, window->packets[k], 1000, 0, cli_addr, (socklen_t) clilen);
+			printf("Sent Packet: %d\n", i);
 		}
 		else if (r > (1 - p_corr)) {
 			char corrupt_packet[4];
@@ -333,7 +334,7 @@ FILE* findFile (char* c) {
 	FILE* f = fopen(c, "r");
 	if (f == NULL)
 		fprintf(stderr, "ERROR: can't find file specified");
-	printf("In findFile() function: \nFile: [%s]\n\n", c);
+	printf("File Found! \nFile: %s\n\n", c);
 	return f;
 }
 
@@ -446,7 +447,7 @@ int main(int argc, char *argv[]) {
 		else {
 			int ack = 0;
 			if (strncmp("done", ack_buffer, 4) == 0) {
-				printf("ACK recieved; process is done\n");
+				printf("\n---------------------\nALL ACKs recieved; process is done\n---------------------\n");
 				exit(0);
 			}
 			ack = atoi(ack_buffer);
