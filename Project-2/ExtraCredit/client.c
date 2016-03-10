@@ -19,10 +19,10 @@ int main(int argc, char *argv[])
     memset(recvBuff, '0', sizeof(recvBuff));
     struct sockaddr_in serv_addr;
 
-    if (argc < 3) { //Change this to 6 after we incorporate the error handling
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
+    // if (argc < 2) { //Change this to 6 after we incorporate the error handling
+    //    fprintf(stderr,"usage %s hostname port\n", argv[0]);
+    //    exit(0);
+    // }
 
     /* Create a socket first */
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0))< 0)
@@ -34,8 +34,11 @@ int main(int argc, char *argv[])
     /* Initialize sockaddr_in data structure */
     serv_addr.sin_family = AF_INET;
 
-    serv_addr.sin_addr.s_addr = argv[1];    //IP address
-    serv_addr.sin_port = argv[2];   //port
+    // serv_addr.sin_port = htons(argv[2]);   //port
+    serv_addr.sin_port = htons(5000);   //port
+
+//    serv_addr.sin_addr.s_addr = inet_addr(argv[1]);    //IP address
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");    //IP address
 
     /* Attempt a connection */
     if(connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))<0)

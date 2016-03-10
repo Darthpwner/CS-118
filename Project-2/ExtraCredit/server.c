@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 
     char* filename;
 
-    if (argc < 3) { /* remember to add in p_loss and p_corr */
-        fprintf(stderr,"usage %s portnumber filename\n", argv[0]);
+    if (argc < 2) { /* remember to add in p_loss and p_corr */
+        fprintf(stderr,"usage %s filename\n", argv[0]);
         exit(1);
     }
 
@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = argv[1];
+    serv_addr.sin_port = htons(5000);
 
-    filename = argv[2];
+    filename = argv[1];
 
     bind(listenfd, (struct sockaddr*)&serv_addr,sizeof(serv_addr));
 
