@@ -16,6 +16,7 @@
 #include "packet.c"
 
 #define MAX_PAYLOAD_CONTENT 984
+#define MAX_SEQUENCE_NUMBER_SIZE 30000  
 
 //charToSeg constants
 #define SEQUENCE_NO_STR_SIZE 5
@@ -60,6 +61,12 @@ packet_t charToSeg(char* c) {
     p_t -> data = malloc(sizeof(char) * MAX_PAYLOAD_CONTENT);
 
     p_t -> sequence_no = atoi(sequence_no_str);
+
+    //Reset the sequence_no if it is bigger than 30,000 kBytes
+    if(p_t -> sequence_no / MAX_SEQUENCE_NUMBER_SIZE > 0) {
+        p_t -> sequence_no %= MAX_SEQUENCE_NUMBER_SIZE;
+    }
+    
     p_t -> length = atoi(length_str);
     p_t -> data_size = data_size;
 
